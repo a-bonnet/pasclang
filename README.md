@@ -24,7 +24,7 @@ Command-line usage is documented by invoking the pasclang executable (present in
 
 ## Support
 
-Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 9 and Fedora 25. Note that you may have to install static development libraries on some distributions that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change, except on FreeBSD where there appears to be a runtime issue with the C++ standard library. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
+Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 9 and Fedora 25 with gcc >= 6.3 and clang >= 4.0.0 as well as LLVM >= 4.0.0. Note that you may have to install static development libraries on some distributions that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change, except on FreeBSD where there appears to be a runtime issue with the C++ standard library. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
 
 ## Source tree
 
