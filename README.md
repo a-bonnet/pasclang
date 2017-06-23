@@ -18,6 +18,8 @@ cd build
 cmake ..
 make -j<number of jobs>``
 
+You can then run the tests by using `make runtest`.
+
 ## Using
 
 Command-line usage is documented by invoking the pasclang executable (present in the bin subfolder of the build directory) with no argument.
