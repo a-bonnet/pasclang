@@ -13,10 +13,12 @@ Pseudo-Pascal is a Pascal dialect which features similar syntax and semantics bu
 Pasclang uses [CMake](https://cmake.org) as its build system since it is the one required to build LLVM.
 In order to build Pasclang, you should [build LLVM](http://llvm.org/docs/CMake.html) and install it with development libraries, then make sure CMake can find it. This is usually done by having it installed in the default `/usr/...` path or defining an environment variable `LLVM_DIR` equal to the installation path. Then you can create your build directory and let CMake do the rest:
 
-``mkdir build
+```delphi
+mkdir build
 cd build
 cmake ..
-make -j<number of jobs>``
+make -j<number of jobs>
+```
 
 You can then run the tests by using `make runtest`.
 
