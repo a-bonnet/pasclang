@@ -225,10 +225,16 @@ void TypeChecker::visit(AST::EFunctionCall& call)
 
     std::string name = call.getName();
     if(this->procedures.find(name) == this->procedures.end())
+    {
         this->undefinedSymbol(name, &call.getLocation()->getStart(), &call.getLocation()->getEnd());
+        return;
+    }
 
     if(this->procedures[name].find(name) == this->procedures[name].end())
+    {
         this->invalidCall(name, &call.getLocation()->getStart(), &call.getLocation()->getEnd());
+        return;
+    }
 
     // Is valid since we made sure the function exists above
     std::list<std::unique_ptr<AST::Procedure>>::const_iterator procedure =
@@ -239,7 +245,10 @@ void TypeChecker::visit(AST::EFunctionCall& call)
     std::list<std::unique_ptr<AST::Expression>>& actuals = call.getActuals();
 
     if(formals.size() != actuals.size())
+    {
         this->invalidArity(name, &call.getLocation()->getStart(), &call.getLocation()->getEnd());
+        return;
+    }
 
     auto formal = formals.begin();
     for(auto actual = actuals.begin() ;

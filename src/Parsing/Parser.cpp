@@ -58,6 +58,7 @@ void Parser::syntaxError(const std::vector<TokenType> expectedTokens)
     {
         this->currentToken++;
     }
+    this->currentToken--;
 
     this->errorHappened = true;
 }
