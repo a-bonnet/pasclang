@@ -1,3 +1,7 @@
+// The current parser implementation performs recursive descent with
+// backtracking. It reports correctly the first syntactic error,
+// then can merely make guesses as the AST will be ill-formed.
+
 #ifndef PASCLANG_PARSING_PARSER_H
 #define PASCLANG_PARSING_PARSER_H
 

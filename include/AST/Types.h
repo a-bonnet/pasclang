@@ -1,3 +1,7 @@
+// The class that manages the different types used in the program. Types are uniqued
+// to avoid allocating on the heap almost as many as there are tree nodes. They are
+// then accessed with the static TableOfTypes::get method.
+
 #ifndef PASCLANG_AST_TYPES_H
 #define PASCLANG_AST_TYPES_H
 

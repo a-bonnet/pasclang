@@ -1,3 +1,7 @@
+// This file contains the class making sure the program is well-typed. It does so
+// by walking the tree and performing various checks by comparing the types
+// obtained in each node as well as warning about potential flaws in the program.
+
 #ifndef PASCLANG_SEMANTIC_TYPECHECKER_H
 #define PASCLANG_SEMANTIC_TYPECHECKER_H
 

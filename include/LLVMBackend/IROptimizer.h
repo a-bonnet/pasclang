@@ -1,3 +1,8 @@
+// Performs optimization and analytical transformations
+// on the generated LLVM IR. Note this component acts
+// by side-effets only and doesn't require getting
+// the result with a specific method.
+
 #ifndef PASCLANG_LLVMBACKEND_IROPTIMIZER_H
 #define PASCLANG_LLVMBACKEND_IROPTIMIZER_H
 

@@ -1,3 +1,5 @@
+// Specialization of the base reporter for command line usage.
+
 #ifndef PASCLANG_MESSAGE_CONSOLEREPORTER_H
 #define PASCLANG_MESSAGE_CONSOLEREPORTER_H
 

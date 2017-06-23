@@ -1,3 +1,5 @@
+// Implements a source code printer from AST, note it removes comments since they are not parsed.
+
 #ifndef PASCLANG_AST_PRINTER_H
 #define PASCLANG_AST_PRINTER_H
 

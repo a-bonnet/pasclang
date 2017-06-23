@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
     unsigned int optimizationLevel = 0;
     bool link = true, assembly = false, print = false, dump = false, frontendOnly = false, needOutput = true;
 
+    // Parsing flags
     for(int argumentsIterator = 1; argumentsIterator < argc ; argumentsIterator++)
     {
         // It's a command
@@ -105,6 +106,7 @@ int main(int argc, char* argv[])
         return ExitCode::WrongUsage;
     }
 
+    // Main driver part
     if(!link)
         outputFile = outputName;
     else
@@ -113,6 +115,7 @@ int main(int argc, char* argv[])
         outputFile = outputName + ".o";
     }
 
+    // Every component throws a pasclang::PasclangException after it is done if something went wrong during its pass
     try {
         Parsing::Driver parsingDriver(reporter.get());
         std::unique_ptr<AST::Program> ast = parsingDriver.parse(inputFile);
@@ -135,6 +138,7 @@ int main(int argc, char* argv[])
             if(link)
             {
 #warning Placeholder until some fork/execlp method (and equivalent on non-Unix) is used instead
+                // The defines are provided by CMake
                 std::string systemArg = PASCLANG_LINKER_DRIVER;
                 systemArg += " -static " + outputFile + " -lpasclang-rt -L " + PASCLANG_RT_BUILD_PATH " -L " + PASCLANG_RT_INSTALL_PATH;
                 systemArg += " -o " + outputExec;
@@ -142,7 +146,6 @@ int main(int argc, char* argv[])
             }
         }
     }
-
     catch (PasclangException& e) {
         exitValue = e.getCode();
     }

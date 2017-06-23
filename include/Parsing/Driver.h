@@ -1,3 +1,7 @@
+// The parsing driver glues the different components
+// responsible for building the AST from the source
+// file together.
+
 #ifndef PASCLANG_PARSING_DRIVER_H
 #define PASCLANG_PARSING_DRIVER_H
 

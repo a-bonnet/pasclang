@@ -1,3 +1,8 @@
+// This file contains the base class that holds every information regarding
+// user input and output. It manages the input file since it is not too
+// useful to have another class do it and every visitor uses the reporter
+// for feedback.
+
 #ifndef PASCLANG_MESSAGE_REPORTER_H
 #define PASCLANG_MESSAGE_REPORTER_H
 

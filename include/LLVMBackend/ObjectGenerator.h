@@ -1,3 +1,6 @@
+// Outputs LLVM module as either and object file for linking
+// or LLVM IR assembly for debugging/analyze.
+
 #ifndef PASCLANG_LLVMBACKEND_OBJECTGENERATOR_H
 #define PASCLANG_LLVMBACKEND_OBJECTGENERATOR_H
 

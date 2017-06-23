@@ -1,3 +1,5 @@
+// Produces the token list from the input file.
+
 #ifndef PASCLANG_PARSING_LEXER_H
 #define PASCLANG_PARSING_LEXER_H
 

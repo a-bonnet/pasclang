@@ -1,3 +1,5 @@
+// Generates LLVM IR from the AST through the LLVM C++ API.
+
 #ifndef PASCLANG_LLVMBACKEND_IRGENERATOR_H
 #define PASCLANG_LLVMBACKEND_IRGENERATOR_H
 

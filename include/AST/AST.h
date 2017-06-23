@@ -1,3 +1,7 @@
+// This file contains AST definitions and operations on nodes as well as the skeleton for AST visitors.
+// AST visitors are designed as builders: they have an internal state which they modify as they visit
+// the program tree. Then one can access the result with a specific method.
+
 #ifndef PASCLANG_AST_H
 #define PASCLANG_AST_H
 
