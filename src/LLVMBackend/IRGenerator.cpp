@@ -223,15 +223,13 @@ void IRGenerator::visit(AST::Instruction& instruction) { }
 void IRGenerator::visit(AST::IProcedureCall& call)
 {
     llvm::Function *callee = this->module->getFunction(call.getName());
-
     std::vector<llvm::Value*> arguments;
     for(auto& argument : call.getActuals())
     {
         argument->accept(*this);
         arguments.push_back(this->lastValue);
     }
-
-    this->lastValue = this->builder.CreateCall(callee, arguments, "procedure");
+    this->lastValue = this->builder.CreateCall(callee, arguments);
 }
 
 void IRGenerator::visit(AST::IVariableAssignment& assignment)
@@ -248,6 +246,7 @@ void IRGenerator::visit(AST::IVariableAssignment& assignment)
 
     lhs = this->lastValue;
 
+    rhs = this->builder.CreateBitCast(rhs, static_cast<llvm::PointerType*>(lhs->getType())->getElementType(), "bitcast");
     this->lastValue = this->builder.CreateStore(rhs, lhs);
 }
 
@@ -263,7 +262,9 @@ void IRGenerator::visit(AST::IArrayAssignment& assignment)
     gepIndex[0] = this->lastValue;
 
     this->lastValue = this->builder.CreateGEP(array, gepIndex, "gep");
-    this->lastValue = this->builder.CreateStore(value, this->lastValue, "storeptr");
+    value = this->builder.CreateBitCast(value, static_cast<llvm::PointerType*>(array->getType())->getElementType(), "arraybitcast");
+    
+    this->lastValue = this->builder.CreateStore(value, this->lastValue);
 }
 
 void IRGenerator::visit(AST::ISequence& sequence)
