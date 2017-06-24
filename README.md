@@ -34,7 +34,7 @@ end.
 
 ## The compiler
 
-Pasclang aims to provide useful and diagnostics. Here is an example incorrect program:
+Pasclang aims to provide useful diagnostics. Here is an example incorrect program:
 ```delphi
 program
 var
