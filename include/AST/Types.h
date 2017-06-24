@@ -13,22 +13,33 @@ namespace pasclang::AST {
 class TableOfTypes
 {
     public:
-
         enum TypeKind {
             Boolean,
             Integer
         };
 
         struct Type {
-            TypeKind kind = TypeKind::Boolean;
-            std::uint32_t dimension = 0;
+            private:
+                TableOfTypes* parentTable;
 
-            Type(TypeKind t, std::uint32_t d) : kind(t), dimension(d) { }
+            public:
+                TypeKind kind = TypeKind::Boolean;
+                std::uint32_t dimension = 0;
+
+                Type(TableOfTypes* parentTable, TypeKind t, std::uint32_t d) : parentTable(parentTable), kind(t), dimension(d) { }
+                Type* increaseDimension()
+                {
+                    return parentTable->get(kind, dimension + 1);
+                }
         };
 
-        TableOfTypes() = delete;
-        ~TableOfTypes() = delete;
-        static const Type* get(TypeKind kind, std::uint32_t dimension);
+    private:
+        std::map<TypeKind, std::map<std::uint32_t, std::unique_ptr<Type>>> tableOfTypes;
+
+    public:
+        TableOfTypes() { }
+        ~TableOfTypes() { }
+        Type* get(TypeKind kind, std::uint32_t dimension);
 };
 
 }

@@ -28,6 +28,8 @@ class TypeChecker : public AST::Visitor
         std::map<std::string, bool> globalInitialized;
         std::string currentFunction;
         Message::BaseReporter* reporter;
+        const TOT::Type* booleanType = nullptr;
+        const TOT::Type* integerType = nullptr;
 
         void wrongType(const TOT::Type* type, const TOT::Type* expected, const Parsing::Position* start, const Parsing::Position* end);
         void wrongDimensions(size_t lhs, size_t rhs, const Parsing::Position* start, const Parsing::Position* end);

@@ -83,16 +83,16 @@ typedef std::unique_ptr<Parsing::Location> LocationPtr;
 class PrimitiveType : public Node
 {
     private:
-        const TableOfTypes::Type* type;
+        TableOfTypes::Type* type;
 
     public:
-        PrimitiveType(const TableOfTypes::Type* type, LocationPtr& location) :
+        PrimitiveType(TableOfTypes::Type* type, LocationPtr& location) :
             Node(location), type(type) { }
         virtual ~PrimitiveType() { }
         virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-        void increaseDimension() { this->type = TableOfTypes::get(this->type->kind, this->type->dimension + 1); }
-        const TableOfTypes::Type* getType() const { return this->type; }
+        void increaseDimension() { this->type = this->type->increaseDimension(); }
+        TableOfTypes::Type* getType() const { return this->type; }
 };
 
 class Instruction : public Node
@@ -401,18 +401,22 @@ class Program final : public Node
         std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>> globals;
         std::list<std::unique_ptr<Procedure>> procedures;
         std::unique_ptr<Instruction> main;
+        std::unique_ptr<TableOfTypes> tot;
 
     public:
         Program(std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>& globals,
             std::list<std::unique_ptr<Procedure>>& procedures,
-            std::unique_ptr<Instruction>& main, LocationPtr& location) :
-            Node(location), globals(std::move(globals)), procedures(std::move(procedures)), main(std::move(main)) { }
+            std::unique_ptr<Instruction>& main, LocationPtr& location,
+            std::unique_ptr<TableOfTypes>& table) :
+            Node(location), globals(std::move(globals)), procedures(std::move(procedures)), main(std::move(main)),
+            tot(std::move(table)) { }
         virtual ~Program() { }
         virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
         std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>& getGlobals() { return this->globals; }
         std::list<std::unique_ptr<Procedure>>& getProcedures() { return this->procedures; }
         std::unique_ptr<Instruction>& getMain() { return this->main; }
+        TableOfTypes* getTypes() { return this->tot.get(); }
 };
 
 } // namespace pasclang::AST

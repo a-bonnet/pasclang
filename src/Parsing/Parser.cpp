@@ -63,7 +63,7 @@ void Parser::syntaxError(const std::vector<TokenType> expectedTokens)
     this->errorHappened = true;
 }
 
-std::unique_ptr<AST::Program> Parser::program()
+std::unique_ptr<AST::Program> Parser::program(std::unique_ptr<AST::TableOfTypes>& types)
 {
     std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> globals;
     std::list<std::unique_ptr<AST::Procedure>> procedures;
@@ -86,7 +86,7 @@ std::unique_ptr<AST::Program> Parser::program()
     Parsing::Position end = this->previous().getLocation().getEnd();
 
     std::unique_ptr<Parsing::Location> location = std::make_unique<Parsing::Location>(start, end);
-    return std::make_unique<AST::Program>(globals, procedures, main, location);
+    return std::make_unique<AST::Program>(globals, procedures, main, location, types);
 }
 
 std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::localsDeclarations()
@@ -150,7 +150,7 @@ std::unique_ptr<AST::PrimitiveType> Parser::primitiveType()
     // In case we declare an array
     std::unique_ptr<AST::PrimitiveType> result(nullptr);
     std::unique_ptr<Location> location(nullptr);
-    const AST::TableOfTypes::Type *type;
+    AST::TableOfTypes::Type *type;
 
     this->expect({TokenType::INTTYPE, TokenType::BOOLTYPE, TokenType::ARRAY});
 
@@ -162,7 +162,7 @@ std::unique_ptr<AST::PrimitiveType> Parser::primitiveType()
         case TokenType::INTTYPE:
         case TokenType::BOOLTYPE:
             location = std::make_unique<Location>(start, end);
-            type = AST::TableOfTypes::get(typeToAst[this->previous().getType()], 0);
+            type = this->types->get(typeToAst[this->previous().getType()], 0);
             return std::make_unique<AST::PrimitiveType>(type, location);
         case TokenType::ARRAY:
             this->expect(TokenType::OF);

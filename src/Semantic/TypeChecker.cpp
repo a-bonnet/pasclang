@@ -9,12 +9,8 @@
 
 namespace pasclang::Semantic {
 
-static const AST::TableOfTypes::Type* booleanType = AST::TableOfTypes::get(AST::TableOfTypes::TypeKind::Boolean, 0);
-static const AST::TableOfTypes::Type* integerType = AST::TableOfTypes::get(AST::TableOfTypes::TypeKind::Integer, 0);
-
 void TypeChecker::wrongType(const TOT::Type* type, const TOT::Type* expected, const Parsing::Position* start, const Parsing::Position* end)
 {
-
     std::string message = "unexpected type ";
     message += (type->kind == TOT::TypeKind::Boolean ? "bool" : "int");
     message += "["; message += std::to_string(type->dimension); message += "] ";
@@ -74,7 +70,12 @@ void TypeChecker::check(std::unique_ptr<AST::Program>& ast)
     this->locals.clear();
 
     std::swap(ast, this->ast);
+
+    this->booleanType = this->ast->getTypes()->get(TOT::TypeKind::Boolean, 0);
+    this->integerType = this->ast->getTypes()->get(TOT::TypeKind::Integer, 0);
+
     this->ast->accept(*this);
+
     std::swap(ast, this->ast);
 
     if(this->errorHappened)
@@ -275,7 +276,7 @@ void TypeChecker::visit(AST::EArrayAccess& access)
                 &access.getIndex()->getLocation()->getStart(), &access.getIndex()->getLocation()->getEnd());
 
     access.getArray()->accept(*this);
-    this->lastType = TOT::get(this->lastType->kind, this->lastType->dimension - 1);
+    this->lastType = this->ast->getTypes()->get(this->lastType->kind, this->lastType->dimension - 1);
 }
 
 void TypeChecker::visit(AST::EArrayAllocation& allocation)
@@ -406,7 +407,7 @@ void TypeChecker::visit(AST::IArrayAssignment& assignment)
 
     assignment.getValue()->accept(*this);
     const TOT::Type* valueType = this->lastType;
-    const TOT::Type* indexedExpressionType = TOT::get(arrayType->kind, arrayType->dimension - 1);
+    const TOT::Type* indexedExpressionType = this->ast->getTypes()->get(arrayType->kind, arrayType->dimension - 1);
     if(indexedExpressionType != valueType)
         this->wrongType(indexedExpressionType, valueType,
                 &assignment.getValue()->getLocation()->getStart(),

@@ -5,13 +5,10 @@
 
 namespace pasclang::AST {
 
-
-static std::map<TableOfTypes::TypeKind, std::map<std::uint32_t, std::unique_ptr<TableOfTypes::Type>>> tableOfTypes;
-
-const TableOfTypes::Type* TableOfTypes::get(TypeKind kind, std::uint32_t dimension)
+TableOfTypes::Type* TableOfTypes::get(TypeKind kind, std::uint32_t dimension)
 {
-    auto resultKind = tableOfTypes.find(kind);
-    if(resultKind != tableOfTypes.end())
+    auto resultKind = this->tableOfTypes.find(kind);
+    if(resultKind != this->tableOfTypes.end())
     {
         auto resultDimension = resultKind->second.find(dimension);
         if(resultDimension != resultKind->second.end())
@@ -20,11 +17,11 @@ const TableOfTypes::Type* TableOfTypes::get(TypeKind kind, std::uint32_t dimensi
         }
         else
         {
-            tableOfTypes[kind][dimension] = std::make_unique<Type>(kind, dimension);
-            return tableOfTypes[kind][dimension].get();
+            this->tableOfTypes[kind][dimension] = std::make_unique<Type>(this, kind, dimension);
+            return this->tableOfTypes[kind][dimension].get();
         }
     }
-    tableOfTypes[kind][dimension] = std::make_unique<Type>(kind, dimension);
+    tableOfTypes[kind][dimension] = std::make_unique<Type>(this, kind, dimension);
     return tableOfTypes[kind][dimension].get();
 }
 

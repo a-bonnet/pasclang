@@ -23,6 +23,7 @@ class Parser {
         std::vector<Token> tokens;
         int currentToken = 0;
         Message::BaseReporter* reporter;
+        AST::TableOfTypes* types = nullptr;
 
         // Token reading
         bool isAtEnd() { return this->peek().getType() == TokenType::ENDFILE; }
@@ -66,7 +67,7 @@ class Parser {
         void syntaxError(const std::vector<TokenType> expectedTokens);
 
         // Recursive descent
-        std::unique_ptr<AST::Program> program();
+        std::unique_ptr<AST::Program> program(std::unique_ptr<AST::TableOfTypes>& types);
         std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> localsDeclarations();
         std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> formalsDeclarations();
         std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> variableDeclaration();
@@ -97,7 +98,9 @@ class Parser {
         Parser(Message::BaseReporter* reporter) : reporter(reporter) { }
         void swapTokensList(std::vector<Token>& tokens) { std::swap(this->tokens, tokens); }
         std::unique_ptr<AST::Program> parse() {
-            auto ast = this->program();
+            std::unique_ptr<AST::TableOfTypes> tot = std::make_unique<AST::TableOfTypes>();
+            this->types = tot.get();
+            auto ast = this->program(tot);
             if(this->errorHappened)
                 throw pasclang::PasclangException(ExitCode::SyntaxError);
             return ast;
