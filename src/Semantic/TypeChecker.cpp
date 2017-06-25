@@ -51,15 +51,40 @@ void TypeChecker::redefiningSymbol(const std::string& symbol, const Parsing::Pos
 void TypeChecker::uninitializedValue(const std::string& symbol, const std::string& function,
         const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string warningMessage = "using unitialized variable " + symbol + (function != "" ? " in function " + function : " in main body");
+    std::string warningMessage = "using unitialized variable " + symbol + (function != "" ? " in function " + function : "");
     this->reporter->message(Message::MessageType::Warning, warningMessage, start, end);
 }
 
 void TypeChecker::unusedValue(const std::string& symbol, const std::string& function,
         const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string warningMessage = "unused variable " + symbol + (function != "" ? " in function " + function : " in main body");
+    std::string warningMessage = "unused variable " + symbol + (function != "" ? " in function " + function : "");
     this->reporter->message(Message::MessageType::Warning, warningMessage, start, end);
+}
+
+void TypeChecker::readDeclaration(AST::Procedure* definition)
+{
+    std::string name = definition->getName();
+
+    if(this->procedures.find(name) != this->procedures.end() ||
+        this->globals.find(name) != this->globals.end())
+        this->redefiningSymbol(name, &definition->getLocation()->getStart(), nullptr);
+
+
+    if(definition->getResultType().get() != nullptr)
+    {
+        this->procedures[name][name] = definition->getResultType().get();
+    }
+
+    for(auto& argument : definition->getFormals())
+    {
+        if(this->locals.find(argument.first) == this->locals.end())
+        {
+            this->procedures[name][argument.first] = argument.second.get();
+        }
+        else
+            this->redefiningSymbol(argument.first, &argument.second->getLocation()->getStart(), nullptr);
+    }
 }
 
 void TypeChecker::check(std::unique_ptr<AST::Program>& ast)
@@ -209,9 +234,9 @@ void TypeChecker::visit(AST::EBinaryOperation& operation)
 void TypeChecker::visit(AST::EFunctionCall& call)
 {
     // built-in function
-    if(call.getName() == "writeln")
+    if(call.getName() == "writeln" || call.getName() == "write")
     {
-        std::string name = "writeln";
+        std::string name = call.getName();
         this->invalidCall(name, &call.getLocation()->getStart(), &call.getLocation()->getEnd());
     }
 
@@ -297,7 +322,7 @@ void TypeChecker::visit(AST::Instruction&) { }
 void TypeChecker::visit(AST::IProcedureCall& call)
 {
     // Built-in procedure
-    if(call.getName() == "writeln")
+    if(call.getName() == "writeln" || call.getName() == "write")
     {
         if(call.getActuals().size() != 1)
             this->invalidArity(call.getName(),
@@ -315,19 +340,11 @@ void TypeChecker::visit(AST::IProcedureCall& call)
     }
 
     std::string name = call.getName();
-    if(this->procedures.find(name) == this->procedures.end())
+    auto procedure = std::find_if(this->ast->getProcedures().begin(), this->ast->getProcedures().end(),
+            [&name](std::unique_ptr<AST::Procedure>& currentProcedure){ return currentProcedure->getName() == name; });
+
+    if(procedure == this->ast->getProcedures().end())
         this->undefinedSymbol(name, &call.getLocation()->getStart(), &call.getLocation()->getEnd());
-
-    /* ???
-     * TODO: see if this is a sloppy copy/paste from EFunctionCall or if there's something more to it
-     */
-//    if(this->procedures[name].find(name) == this->procedures[name].end())
-//        this->invalidCall(name, nullptr, nullptr);
-
-    // Is valid since we made sure the procedure exists above
-    std::list<std::unique_ptr<AST::Procedure>>::const_iterator procedure =
-        std::find_if(this->ast->getProcedures().begin(), this->ast->getProcedures().end(),
-                     [&name](std::unique_ptr<AST::Procedure>& p){ return (p->getName() == name); });
 
     std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>>& formals = procedure->get()->getFormals();
     std::list<std::unique_ptr<AST::Expression>>& actuals = call.getActuals();
@@ -451,15 +468,10 @@ void TypeChecker::visit(AST::Procedure& definition)
     std::string name = definition.getName();
     this->currentFunction = name;
 
-    if(this->procedures.find(name) != this->procedures.end() ||
-        this->globals.find(name) != this->globals.end())
-        this->redefiningSymbol(name, &definition.getLocation()->getStart(), nullptr);
-
 
     if(definition.getResultType().get() != nullptr)
     {
         this->locals[name] = definition.getResultType().get();
-        this->procedures[name][name] = definition.getResultType().get();
         this->localUsage[name] = false;
         this->localInitialized[name] = false;
     }
@@ -469,7 +481,6 @@ void TypeChecker::visit(AST::Procedure& definition)
         if(this->locals.find(argument.first) == this->locals.end())
         {
             this->locals[argument.first] = argument.second.get();
-            this->procedures[name][argument.first] = argument.second.get();
             this->localInitialized[argument.first] = true;
         }
         else
@@ -518,6 +529,10 @@ void TypeChecker::visit(AST::Program& program)
             this->redefiningSymbol(global.first, &global.second->getLocation()->getStart(),
                     &global.second->getLocation()->getEnd());
     }
+
+    // Checking declarations comes first since functions might call eachother recursively
+    for(const auto& procedure : program.getProcedures())
+        this->readDeclaration(procedure.get());
 
     // Table of functions and procedures
     for(auto& procedure : program.getProcedures())

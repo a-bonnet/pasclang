@@ -80,16 +80,12 @@ void Lexer::skipComment()
     {
         this->currentChar = this->getNextChar();
         if(this->currentChar == '}')
-        {
             currentDepth--;
-            this->currentChar = this->getNextChar();
-        }
         if(this->currentChar == '{')
-        {
             currentDepth++;
-            this->currentChar = this->getNextChar();
-        }
     }
+
+    this->currentChar = this->getNextChar();
 }
 
 Token Lexer::getNextToken()

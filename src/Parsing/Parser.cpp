@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include <Semantic/TypeChecker.h>
 #include <AST/Types.h>
 #include "Pasclang.h"
 
@@ -54,13 +55,8 @@ void Parser::syntaxError(const std::vector<TokenType> expectedTokens)
     this->reporter->message(Message::MessageType::Error, errorMessage, &this->peek().getLocation().getStart(),
             &this->peek().getLocation().getEnd());
 
-    while(std::find(expectedTokens.begin(), expectedTokens.end(), this->tokens[currentToken].getType()) == expectedTokens.end())
-    {
-        this->currentToken++;
-    }
-    this->currentToken--;
-
     this->errorHappened = true;
+    throw PasclangException(ExitCode::SyntaxError);
 }
 
 std::unique_ptr<AST::Program> Parser::program(std::unique_ptr<AST::TableOfTypes>& types)

@@ -78,21 +78,26 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
     file.open(this->getFileName(), file.in);
     char currentChar = 0;
 
+    // Look into this
+    std::cout << output << std::endl;
+    return;
+
     file.seekg(start->getBeginningOfLine(), file.beg);
 
     if(start != nullptr)
     {
         int lengthToEndOfLine = 0;
+
         do {
             currentChar = file.get();
             buffer += currentChar;
-        } while(currentChar != '\n');
+        } while(currentChar != '\n' && !file.eof());
 
         file.seekg(start->getOffset(), file.beg);
         do {
             currentChar = file.get();
             lengthToEndOfLine++;
-        } while(currentChar != '\n');
+        } while(currentChar != '\n' && !file.eof());
 
         for(int i = 0 ; i < start->getOffset() - start->getBeginningOfLine() ; i++)
             buffer += ' ';
@@ -109,10 +114,10 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
                 buffer += '~';
         }
 
-        std::cout << output << '\n' << buffer << std::endl;
 
         file.close();
     }
+    std::cout << output << '\n' << buffer << std::endl;
 }
 
 void ConsoleReporter::message(MessageType type, std::string message, const Parsing::Position* start, const Parsing::Position* end)

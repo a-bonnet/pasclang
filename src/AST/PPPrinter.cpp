@@ -115,7 +115,7 @@ void PPPrinter::visit(EBinaryOperation& operation)
             this->buffer += " == ";
             break;
         case EBinaryOperation::Type::BinaryNonEquality:
-            this->buffer += " != ";
+            this->buffer += " <> ";
             break;
     }
 

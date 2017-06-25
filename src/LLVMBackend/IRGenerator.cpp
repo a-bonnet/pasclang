@@ -37,6 +37,35 @@ llvm::Type* IRGenerator::astToLlvmType(AST::PrimitiveType* type)
     return (pointerType == nullptr ? resultType : pointerType);
 }
 
+llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition)
+{
+    std::vector<llvm::Type*> argumentsTypes;
+    argumentsTypes.reserve(definition->getFormals().size());
+    for(auto& argument : definition->getFormals())
+        argumentsTypes.push_back(this->astToLlvmType(argument.second.get()));
+
+    llvm::FunctionType* procedureType;
+
+    if(definition->getResultType().get() != nullptr)
+        procedureType = llvm::FunctionType::get(this->astToLlvmType(definition->getResultType().get()),
+            argumentsTypes, false);
+    else
+        procedureType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context),
+            argumentsTypes, false);
+
+    llvm::Function* procedure = llvm::Function::Create(procedureType, llvm::Function::ExternalLinkage,
+            definition->getName(), this->module.get());
+
+    auto formalsIterator = definition->getFormals().begin();
+    for(auto argument = procedure->arg_begin() ; argument != procedure->arg_end() ; argument++)
+    {
+        argument->setName(formalsIterator->first);
+        formalsIterator++;
+    }
+
+    return procedure;
+}
+
 llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type)
 {
     this->module->getOrInsertGlobal(name, type);
@@ -182,7 +211,6 @@ void IRGenerator::visit(AST::EFunctionCall& call)
     }
 
     this->lastValue = this->builder.CreateCall(callee, arguments, "call");
-
 }
 
 void IRGenerator::visit(AST::EArrayAccess& access)
@@ -263,7 +291,7 @@ void IRGenerator::visit(AST::IArrayAssignment& assignment)
 
     this->lastValue = this->builder.CreateGEP(array, gepIndex, "gep");
     value = this->builder.CreateBitCast(value, static_cast<llvm::PointerType*>(array->getType())->getElementType(), "arraybitcast");
-    
+
     this->lastValue = this->builder.CreateStore(value, this->lastValue);
 }
 
@@ -331,22 +359,7 @@ void IRGenerator::visit(AST::IRepetition& repetition)
 
 void IRGenerator::visit(AST::Procedure& definition)
 {
-    std::vector<llvm::Type*> argumentsTypes;
-    argumentsTypes.reserve(definition.getFormals().size());
-    for(auto& argument : definition.getFormals())
-        argumentsTypes.push_back(this->astToLlvmType(argument.second.get()));
-
-    llvm::FunctionType* procedureType;
-
-    if(definition.getResultType().get() != nullptr)
-        procedureType = llvm::FunctionType::get(this->astToLlvmType(definition.getResultType().get()),
-            argumentsTypes, false);
-    else
-        procedureType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context),
-            argumentsTypes, false);
-
-    llvm::Function* procedure = llvm::Function::Create(procedureType, llvm::Function::ExternalLinkage,
-            definition.getName(), this->module.get());
+    llvm::Function* procedure = this->module->getFunction(definition.getName());
 
     auto formalsIterator = definition.getFormals().begin();
     for(auto argument = procedure->arg_begin() ; argument != procedure->arg_end() ; argument++)
@@ -393,6 +406,7 @@ void IRGenerator::visit(AST::Program& program)
     writelnArgument[0] = llvm::Type::getInt32Ty(this->context);
     llvm::FunctionType* writelnType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context), writelnArgument, false);
     llvm::Function::Create(writelnType, llvm::Function::ExternalLinkage, "writeln", this->module.get());
+    llvm::Function::Create(writelnType, llvm::Function::ExternalLinkage, "write", this->module.get());
     std::vector<llvm::Type*> allocArguments(2);
     allocArguments[0] = llvm::Type::getInt32Ty(this->context);
     allocArguments[1] = llvm::Type::getInt8Ty(this->context);
@@ -403,6 +417,11 @@ void IRGenerator::visit(AST::Program& program)
 
     for(auto& global : program.getGlobals())
         this->emitGlobal(global.first, this->astToLlvmType(global.second.get()));
+
+    for(auto& procedure : program.getProcedures())
+    {
+        this->emitDeclaration(procedure.get());
+    }
 
     for(auto& procedure : program.getProcedures())
         procedure->accept(*this);

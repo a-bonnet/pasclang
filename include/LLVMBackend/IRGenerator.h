@@ -34,6 +34,7 @@ class IRGenerator final : public AST::Visitor
         std::map<std::string, llvm::GlobalVariable*> globals;
         std::map<std::string, llvm::AllocaInst*> locals;
 
+        llvm::Value* emitDeclaration(AST::Procedure* definition);
         llvm::Value* emitGlobal(std::string& name, llvm::Type* type);
         llvm::Function* emitMain(std::unique_ptr<AST::Instruction>& main);
         llvm::Type* astToLlvmType(AST::PrimitiveType* type);

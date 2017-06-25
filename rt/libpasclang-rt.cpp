@@ -24,6 +24,11 @@ extern "C" int readln()
     return input;
 }
 
+extern "C" void write(int output)
+{
+    printf("%d ", output);
+}
+
 extern "C" void writeln(int output)
 {
     printf("%d\n", output);

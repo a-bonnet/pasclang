@@ -40,6 +40,8 @@ class TypeChecker : public AST::Visitor
         void uninitializedValue(const std::string& symbol, const std::string& function, const Parsing::Position* start, const Parsing::Position* end);
         void unusedValue(const std::string& symbol, const std::string& function, const Parsing::Position* start, const Parsing::Position* end);
 
+        void readDeclaration(AST::Procedure* definition);
+
     public:
         TypeChecker(Message::BaseReporter* reporter) : reporter(reporter) { }
         virtual ~TypeChecker() { }

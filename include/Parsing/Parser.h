@@ -65,6 +65,7 @@ class Parser {
         }
 
         void syntaxError(const std::vector<TokenType> expectedTokens);
+        void lookForAdditionalErrors();
 
         // Recursive descent
         std::unique_ptr<AST::Program> program(std::unique_ptr<AST::TableOfTypes>& types);
