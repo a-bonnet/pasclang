@@ -28,6 +28,7 @@ class Lexer
         Message::BaseReporter* reporter;
 
         char getNextChar();
+        void skipComment();
         void buildTokenList();
         Token getNextToken();
         [[ noreturn ]] void lexicalError(std::string& errorMessage);

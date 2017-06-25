@@ -11,7 +11,7 @@ static std::vector<std::string> tokenString =
 {
     "end of file", "int literal", "boolean literal", "identifier",
     "program", ".", "begin", "end", "var", "function", "procedure",
-    "(", ")", "[", "]", ":=", "or", "and", "not", "=", "!=", "+", "-", "*", "/",
+    "(", ")", "[", "]", ":=", "or", "and", "not", "=", "<>", "+", "-", "*", "/",
     "<=", "<", ">=", ">", ":", ";", ",", "array", "of", "int", "bool",
     "new", "if", "then", "else", "while", "do"
 };
@@ -72,6 +72,26 @@ char Lexer::getNextChar()
     return nextChar;
 }
 
+void Lexer::skipComment()
+{
+    int currentDepth = 1;
+
+    while(currentDepth > 0)
+    {
+        this->currentChar = this->getNextChar();
+        if(this->currentChar == '}')
+        {
+            currentDepth--;
+            this->currentChar = this->getNextChar();
+        }
+        if(this->currentChar == '{')
+        {
+            currentDepth++;
+            this->currentChar = this->getNextChar();
+        }
+    }
+}
+
 Token Lexer::getNextToken()
 {
     buffer = "";
@@ -81,20 +101,9 @@ Token Lexer::getNextToken()
 
     Token::TokenType type;
 
-    // Comments are just ignored by the lexer except for position
     while(this->currentChar == '{')
     {
-        while(this->currentChar != '}')
-        {
-            this->currentChar = this->getNextChar();
-            if(this->currentChar == EOF)
-            {
-                std::string errorMessage = "unexpected end of file during comment";
-                this->reporter->message(Message::MessageType::Error, errorMessage, nullptr, nullptr);
-                throw PasclangException(ExitCode::LexicalError);
-            }
-        }
-        this->currentChar = this->getNextChar();
+        this->skipComment();
     }
 
     switch(this->currentChar)
@@ -156,15 +165,6 @@ Token Lexer::getNextToken()
             type = Token::TokenType::SLASH;
             break;
 
-        case '!':
-            if(this->reporter->peekStream() == '=') {
-                this->currentChar = this->getNextChar();
-                type = Token::TokenType::NEQUAL;
-                break;
-            }
-            type = Token::TokenType::NOT;
-            break;
-
         case '=':
             type = Token::TokenType::EQUAL;
             break;
@@ -173,6 +173,11 @@ Token Lexer::getNextToken()
             if(this->reporter->peekStream() == '=') {
                 currentChar = this->getNextChar();
                 type = Token::TokenType::LEQUAL;
+                break;
+            }
+            if(this->reporter->peekStream() == '>') {
+                currentChar = this->getNextChar();
+                type = Token::TokenType::NEQUAL;
                 break;
             }
             type = Token::TokenType::LTHAN;
@@ -202,7 +207,7 @@ Token Lexer::getNextToken()
                 break;
             }
 
-            // Lexing identifier/keyword
+            // Lexing identifier/keyword/booleans
             if(std::isalpha(this->currentChar)) {
                 this->buffer += this->currentChar;
                 while(std::isalnum(this->reporter->peekStream()))
