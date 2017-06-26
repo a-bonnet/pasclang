@@ -9,7 +9,7 @@ Pasclang is a compiler for the educational language Pseudo-Pascal. It uses the L
 Pseudo-Pascal is a Pascal dialect which features similar syntax and semantics but has several limitations. For example, only single-file programs can be compiled. The supported types are integers and booleans and only two built-in functions exist: `readln()` which reads an integer from the standard input, and `writeln(x)` where `x` is an integer printer to the standard output. The [test directory](test/) features several examples of programs written in Pseudo-Pascal. More examples will be added as features get implemented.
 For those who are not familiar with the language, here is a sample program that computes the given Fibonacci number until 0 is given:
 
-```delphi
+```pascal
 program
 var
     a : integer;
@@ -34,58 +34,93 @@ end.
 
 ## The compiler
 
-Pasclang aims to provide useful diagnostics. Here is an example incorrect program:
-```delphi
+The compiler operates via successive passes. The first one consists of parsing the input and producing the corresponding syntax tree (lexical and syntactic analyses). The next step is done with the type checker (semantic analysis) before using LLVM to produce the output.
+
+Pasclang aims to produce useful diagnostics. Here is an example syntactically incorrect program:
+```pascal
+$ cat syntax.pp 
 program
-var
-    a, b : integer;
-    c : array of integer;
-function proc(a : integer) : boolean;
+var a: array of integer;
+procedure f(i : integer; a : array of integer; b : boolean);
 begin
-    b := 5;
-    a := b + 1;
-    writeln(b)
+    writeln(a)
+end
+begin
+    b := true
+    a := new array of array of integer[a];
+    a := f(156, a,)
+end.
+$ bin/pasclang syntax.pp -f
+error: at line 7
+        unexpected token begin when expecting any of the following: ;
+
+begin
+^^^^^
+note: 
+        Pasclang will now look for additional syntax errors. However since the input already contains an error, some reports may be wrong.
+
+error: at line 10
+        unexpected token ) when expecting any of the following: boolean literal, int literal, identifier, (
+
+    a := f(156, a,)
+                  ^
+```
+and for the semantic pass:
+```pascal
+$ cat type.pp 
+program
+var a: array of integer;
+procedure f(i : integer; a : array of integer; b : boolean);
+begin
+    writeln(a, i)
 end;
 begin
-    c := new array of array of boolean[6];
-    c[2] := readln();
-    writeln(c[2]);
-    b := proc(true);
-    proc(true)
+    b := true;
+    a := new array of array of integer[a];
+    a := f(156, a, b)
 end.
-```
-when running `pasclang program.pp -f`, we get the following diagnostics:
-```
+$ bin/pasclang type.pp -f
+error: at line 5
+        wrong number of arguments in call to writeln
+
+    writeln(a, i)
+    ^^^^^^^^^^^^^
+error: at line 5
+        unexpected type int[1] instead of int[0] 
+
+    writeln(a, i)
+            ^^
 warning: 
-	unused variable a in function proc
+        unused variable b in function f
 
-error: at line 12
-	unexpected type bool[2] instead of int[2] 
+warning: 
+        unused variable i in function f
 
-    c := new array of array of boolean[6];
+error: at line 8
+        undefined symbol b
+
+    b := true;
+    ^^^^^^
+error: at line 9
+        unexpected type int[1] instead of int[0] 
+
+    a := new array of array of integer[a];
+                                       ^^
+error: at line 9
+        unexpected type int[2] instead of int[1] 
+
+    a := new array of array of integer[a];
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-error: at line 15
-	unexpected type bool[0] instead of int[0] 
+error: at line 10
+        invalid call to procedure or function f
 
-    b := proc(true);
-              ^^^^^
-error: at line 15
-	unexpected type bool[0] instead of int[0] 
+    a := f(156, a, b)
+         ^^^^^^^^^^^^
+error: at line 10
+        unexpected type int[2] instead of int[1] 
 
-    b := proc(true);
-         ^^^^^^^^^^
-error: at line 16
-	unexpected type bool[0] instead of int[0] 
-
-    proc(true)
-         ^^^^^
-error: at line 16
-	invalid call to procedure or function proc
-
-    proc(true)
-    ^^^^^^^^^^
-warning: 
-	unused variable a in main body
+    a := f(156, a, b)
+         ^^^^^^^^^^^^
 ```
 
 ## Building
@@ -132,3 +167,4 @@ Finally we have the Pseudo-Pascal source files used for testing. During the test
 
 * [Luc Maranget's course](http://gallium.inria.fr/~maranget/X/compil/poly/index.html) was the main reason I chose Pseudo-Pascal (in French).
 * The [LLVM Kaleidoscope Tutorial](http://llvm.org/docs/tutorial/index.html) is a thoroughly explained document on how to use the LLVM C++ and OCaml API for a functional programming language.
+
