@@ -9,10 +9,10 @@ namespace pasclang::Parsing {
 
 static std::vector<std::string> tokenString =
 {
-    "end of file", "int literal", "boolean literal", "identifier",
+    "end of file", "integer literal", "boolean literal", "identifier",
     "program", ".", "begin", "end", "var", "function", "procedure",
     "(", ")", "[", "]", ":=", "or", "and", "not", "=", "<>", "+", "-", "*", "/",
-    "<=", "<", ">=", ">", ":", ";", ",", "array", "of", "int", "bool",
+    "<=", "<", ">=", ">", ":", ";", ",", "array", "of", "integer type", "boolean type",
     "new", "if", "then", "else", "while", "do"
 };
 

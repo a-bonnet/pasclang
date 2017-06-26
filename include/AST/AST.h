@@ -80,6 +80,7 @@ class Visitor
 
 typedef std::unique_ptr<Parsing::Location> LocationPtr;
 
+// Points to a (shared) structure holding type information
 class PrimitiveType : public Node
 {
     private:
@@ -95,6 +96,7 @@ class PrimitiveType : public Node
         TableOfTypes::Type* getType() const { return this->type; }
 };
 
+// Instruction class name begins with 'I'. An instruction has no value.
 class Instruction : public Node
 {
     public:
@@ -103,6 +105,7 @@ class Instruction : public Node
         virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 };
 
+// Expression class name begins with 'E'. An expression has a value.
 class Expression : public Node
 {
     public:
@@ -111,6 +114,7 @@ class Expression : public Node
         virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 };
 
+// A constant literal. Value is the one held by the subclass.
 class EConstant : public Expression
 {
     public:
@@ -119,6 +123,7 @@ class EConstant : public Expression
         virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 };
 
+// A boolean being true or false. Value is the boolean.
 class ECBoolean final : public EConstant
 {
     private:
@@ -132,6 +137,7 @@ class ECBoolean final : public EConstant
         bool getValue() const { return this->value; }
 };
 
+// A 32-bits signed integer. Value is the integer.
 class ECInteger final : public EConstant
 {
     private:
@@ -145,6 +151,7 @@ class ECInteger final : public EConstant
         std::int32_t getValue() const { return this->value; }
 };
 
+// Value is the variable's current value accessed from the table of symbols
 class EVariableAccess final : public Expression
 {
     private:
@@ -158,6 +165,7 @@ class EVariableAccess final : public Expression
         const std::string& getName() const { return this->name; }
 };
 
+// Evaluates the expression, value is the operation's result.
 class EUnaryOperation final : public Expression
 {
     public:
@@ -180,6 +188,7 @@ class EUnaryOperation final : public Expression
         Expression* getExpression() { return this->expression.get(); }
 };
 
+// Evaluates left then right-hand side, value is the computed operation's result.
 class EBinaryOperation final : public Expression
 {
     public:
@@ -215,6 +224,7 @@ class EBinaryOperation final : public Expression
         std::unique_ptr<Expression>& getRight() { return this->right; }
 };
 
+// Evaluates all arguments from left to right, value is the function's returned value.
 class EFunctionCall final : public Expression
 {
     private:
@@ -231,6 +241,7 @@ class EFunctionCall final : public Expression
         std::list<std::unique_ptr<Expression>>& getActuals() { return this->actuals; }
 };
 
+// Computes the array address then the index, returns the value stored at the computed location.
 class EArrayAccess final : public Expression
 {
     private:
@@ -247,6 +258,7 @@ class EArrayAccess final : public Expression
         std::unique_ptr<Expression>& getIndex() { return this->index; }
 };
 
+// Allocates a new (eventually multi-dimensional) array. Value is the allocated block's starting location.
 class EArrayAllocation final : public Expression
 {
     private:
@@ -263,6 +275,7 @@ class EArrayAllocation final : public Expression
         std::unique_ptr<Expression>& getElements() { return this->elements; }
 };
 
+// Evaluates from left to right.
 class IProcedureCall final : public Instruction
 {
     private:
@@ -279,6 +292,7 @@ class IProcedureCall final : public Instruction
         std::list<std::unique_ptr<Expression>>& getActuals() { return this->actuals; }
 };
 
+// Stores the computed value at the variable's address.
 class IVariableAssignment final : public Instruction
 {
     private:
@@ -295,6 +309,7 @@ class IVariableAssignment final : public Instruction
         std::unique_ptr<Expression>& getValue() { return this->value; }
 };
 
+// Computes the array address, the index and uses the resulting address to store the computed value.
 class IArrayAssignment final : public Instruction
 {
     private:
@@ -315,6 +330,7 @@ class IArrayAssignment final : public Instruction
         std::unique_ptr<Expression>& getValue() { return this->value; }
 };
 
+// Executes each instruction in order.
 class ISequence final : public Instruction
 {
     private:
@@ -329,6 +345,7 @@ class ISequence final : public Instruction
         std::list<std::unique_ptr<Instruction>>& getInstructions() { return this->instructions; }
 };
 
+// Evaluates the boolean condition. If value is true, executes conditionTrue, else if false and conditionFalse exists, executes conditionFalse.
 class ICondition final : public Instruction
 {
     private:
@@ -349,6 +366,7 @@ class ICondition final : public Instruction
         std::unique_ptr<Instruction>& getFalse() { return this->conditionFalse; }
 };
 
+// Computes the boolean condition's value, repeats evaluating the instruction as long as the condition is true.
 class IRepetition final : public Instruction
 {
     private:
@@ -365,6 +383,7 @@ class IRepetition final : public Instruction
         std::unique_ptr<Instruction>& getInstructions() { return this->instruction; }
 };
 
+// A function or a procedure.
 class Procedure final : public Node
 {
     private:
@@ -395,6 +414,7 @@ class Procedure final : public Node
         std::unique_ptr<Instruction>& getBody() { return this->body; }
 };
 
+// A program
 class Program final : public Node
 {
     private:

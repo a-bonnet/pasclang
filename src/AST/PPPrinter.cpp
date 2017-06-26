@@ -1,5 +1,3 @@
-// See header for file description
-
 #include "AST/PPPrinter.h"
 #include <iostream>
 

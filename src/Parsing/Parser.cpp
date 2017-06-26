@@ -69,6 +69,7 @@ void Parser::syntaxError(const std::vector<TokenType> expectedTokens)
         this->reporter->message(Message::MessageType::Note, noteMessage, nullptr, nullptr);
     }
 
+    // Panic mode: try to find some more errors before exiting
     while(this->peek().getType() != TokenType::ENDFILE)
     {
         if(this->match({TokenType::BEGIN, TokenType::DO, TokenType::THEN, TokenType::ELSE}))
@@ -88,6 +89,7 @@ void Parser::syntaxError(const std::vector<TokenType> expectedTokens)
     throw PasclangException(ExitCode::SyntaxError);
 }
 
+// program = PROGRAM [VAR declaration {declarations}] {procedure} sequence DOT
 std::unique_ptr<AST::Program> Parser::program(std::unique_ptr<AST::TableOfTypes>& types)
 {
     std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> globals;
@@ -114,6 +116,7 @@ std::unique_ptr<AST::Program> Parser::program(std::unique_ptr<AST::TableOfTypes>
     return std::make_unique<AST::Program>(globals, procedures, main, location, types);
 }
 
+// declarations = {declaration SEMICOLON}
 std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::localsDeclarations()
 {
     std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> bindings;
@@ -129,6 +132,8 @@ std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::l
     return bindings;
 }
 
+// formals = [formal [{COMMA formal}]]
+// formal = declaration
 std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::formalsDeclarations()
 {
     std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> bindings;
@@ -144,6 +149,7 @@ std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::f
     return bindings;
 }
 
+// declaration = IDENTIFIER {COMMA IDENTIFIER} COLON type
 std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::variableDeclaration()
 {
     std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> declarationList;
@@ -170,6 +176,7 @@ std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::v
     return declarationList;
 }
 
+// type = {ARRAY OF} TYPE
 std::unique_ptr<AST::PrimitiveType> Parser::primitiveType()
 {
     // In case we declare an array
@@ -200,6 +207,9 @@ std::unique_ptr<AST::PrimitiveType> Parser::primitiveType()
     return result;
 }
 
+// procedure = function | voidprocedure
+// function = FUNCTION IDENTIFIER LEFTPAR formals RIGHTPAR COLON type SEMICOLON [VAR declarations] sequence SEMICOLON
+// voidprocedure = PROCEDURE IDENTIFIER LEFTPAR formals RIGHTPAR SEMICOLON [VAR declarations] sequence SEMICOLON
 std::unique_ptr<AST::Procedure> Parser::procedure()
 {
     bool isFunction;
@@ -244,6 +254,7 @@ std::unique_ptr<AST::Procedure> Parser::procedure()
     return std::make_unique<AST::Procedure>(name, formals, result, locals, body, location);
 }
 
+// sequence = BEGIN [instruction {SEMICOLON instruction}] END
 std::unique_ptr<AST::Instruction> Parser::sequence()
 {
     std::list<std::unique_ptr<AST::Instruction>> instructions;
@@ -269,6 +280,7 @@ std::unique_ptr<AST::Instruction> Parser::sequence()
     return result;
 }
 
+// instruction = sequence | condition | repetition | call | variableassignment | arrayassignment
 std::unique_ptr<AST::Instruction> Parser::instruction()
 {
     if(this->check(Token::BEGIN))
@@ -284,6 +296,7 @@ std::unique_ptr<AST::Instruction> Parser::instruction()
     return std::unique_ptr<AST::Instruction>(nullptr);
 }
 
+// condition = IF expression THEN instruction [ELSE instruction]
 std::unique_ptr<AST::Instruction> Parser::condition()
 {
     std::unique_ptr<AST::Expression> condition(nullptr);
@@ -308,6 +321,7 @@ std::unique_ptr<AST::Instruction> Parser::condition()
     return result;
 }
 
+// repetition = WHILE expression DO instruction
 std::unique_ptr<AST::Instruction> Parser::repetition()
 {
     std::unique_ptr<AST::Expression> condition;
@@ -328,6 +342,7 @@ std::unique_ptr<AST::Instruction> Parser::repetition()
     return result;
 }
 
+// see instruction
 std::unique_ptr<AST::Instruction> Parser::instructionWithIdentifier()
 {
     this->expect(TokenType::IDENTIFIER);
@@ -342,6 +357,7 @@ std::unique_ptr<AST::Instruction> Parser::instructionWithIdentifier()
 }
 
 
+// variableassignment = IDENTIFIER ASSIGN expression
 std::unique_ptr<AST::Instruction> Parser::variableAssignment()
 {
     std::string identifier = this->previous().getLiteral();
@@ -360,6 +376,7 @@ std::unique_ptr<AST::Instruction> Parser::variableAssignment()
     return result;
 }
 
+// arrayassignment = (variableaccess | arrayaccess) ASSIGN expression
 std::unique_ptr<AST::Instruction> Parser::arrayAssignment()
 {
     Position start = this->peek().getLocation().getStart();
@@ -376,6 +393,7 @@ std::unique_ptr<AST::Instruction> Parser::arrayAssignment()
     return std::make_unique<AST::IArrayAssignment>(array->getArray(), array->getIndex(), value, location);
 }
 
+// call = IDENTIFIER LEFTPAR [expression {COMMA expression}] RIGHTPAR
 std::unique_ptr<AST::Instruction> Parser::procedureCall()
 {
     std::string identifier = this->previous().getLiteral();
@@ -396,6 +414,7 @@ std::unique_ptr<AST::Instruction> Parser::procedureCall()
     return result;
 }
 
+// expression = arrayallocation | logicalor
 std::unique_ptr<AST::Expression> Parser::expression()
 {
     if(this->match(TokenType::NEW))
@@ -412,6 +431,7 @@ std::unique_ptr<AST::Expression> Parser::expression()
     return this->logicalOr();
 }
 
+// logicalor = logicaland {OR logicaland}
 std::unique_ptr<AST::Expression> Parser::logicalOr()
 {
     Position start = this->peek().getLocation().getStart();
@@ -432,6 +452,7 @@ std::unique_ptr<AST::Expression> Parser::logicalOr()
     return expression;
 }
 
+// logicaland = logicalunary {AND logicalunary}
 std::unique_ptr<AST::Expression> Parser::logicalAnd()
 {
     Position start = this->peek().getLocation().getStart();
@@ -451,6 +472,7 @@ std::unique_ptr<AST::Expression> Parser::logicalAnd()
     return expression;
 }
 
+// logicalunary = (NOT) equality
 std::unique_ptr<AST::Expression> Parser::logicalUnary()
 {
     Position start = this->peek().getLocation().getStart();
@@ -470,6 +492,7 @@ std::unique_ptr<AST::Expression> Parser::logicalUnary()
         return this->equality();
 }
 
+// equality = relational [EQUAL relational]
 std::unique_ptr<AST::Expression> Parser::equality()
 {
     Position start = this->peek().getLocation().getStart();
@@ -489,6 +512,7 @@ std::unique_ptr<AST::Expression> Parser::equality()
     return expression;
 }
 
+// relational = additive [(GTHAN | GEQUAL | LTHAN | LEQUAL) additive]
 std::unique_ptr<AST::Expression> Parser::relational()
 {
     Position start = this->peek().getLocation().getStart();
@@ -508,6 +532,7 @@ std::unique_ptr<AST::Expression> Parser::relational()
     return expression;
 }
 
+// additive = multiplicative {(PLUS | MINUS) multiplicative}
 std::unique_ptr<AST::Expression> Parser::additive()
 {
     Position start = this->peek().getLocation().getStart();
@@ -527,6 +552,7 @@ std::unique_ptr<AST::Expression> Parser::additive()
     return expression;
 }
 
+// multiplicative = arithmeticunary {(STAR SLASH) arithmeticunary}
 std::unique_ptr<AST::Expression> Parser::multiplicative()
 {
     Position start = this->peek().getLocation().getStart();
@@ -546,6 +572,7 @@ std::unique_ptr<AST::Expression> Parser::multiplicative()
     return expression;
 }
 
+// arithmeticunary = (MINUS) postfix
 std::unique_ptr<AST::Expression> Parser::arithmeticUnary()
 {
     Position start = this->peek().getLocation().getStart();
@@ -564,6 +591,7 @@ std::unique_ptr<AST::Expression> Parser::arithmeticUnary()
         return this->postfix();
 }
 
+// postfix = primary (LEFTPAR actuals RIGHTPAR) | (LEFTBRACK expression RIGHTBRACK {LEFTBRACK expression RIGHTBRACK})
 std::unique_ptr<AST::Expression> Parser::postfix()
 {
     Position start = this->peek().getLocation().getStart();
@@ -603,6 +631,7 @@ std::unique_ptr<AST::Expression> Parser::postfix()
     return primary;
 }
 
+// primary = INTLITERAL | BOOLLITERAL | IDENTIFIER | LEFTPAR expression RIGHTPAR
 std::unique_ptr<AST::Expression> Parser::primary()
 {
     Position start = this->peek().getLocation().getStart();
@@ -640,6 +669,7 @@ std::unique_ptr<AST::Expression> Parser::primary()
     return expression;
 }
 
+// actuals = [expression {COMMA expression}]
 std::list<std::unique_ptr<AST::Expression>> Parser::actuals()
 {
     std::list<std::unique_ptr<AST::Expression>> result;

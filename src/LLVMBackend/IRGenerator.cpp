@@ -8,6 +8,7 @@
 
 namespace pasclang::LLVMBackend {
 
+// converts PP type to LLVM type
 llvm::Type* IRGenerator::astToLlvmType(AST::PrimitiveType* type)
 {
     llvm::Type* resultType = nullptr;
@@ -37,6 +38,7 @@ llvm::Type* IRGenerator::astToLlvmType(AST::PrimitiveType* type)
     return (pointerType == nullptr ? resultType : pointerType);
 }
 
+// emits LLVM IR for procedure declaration
 llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition)
 {
     std::vector<llvm::Type*> argumentsTypes;
@@ -66,6 +68,7 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition)
     return procedure;
 }
 
+// emits LLVM IR for global declaration
 llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type)
 {
     this->module->getOrInsertGlobal(name, type);
@@ -81,6 +84,7 @@ llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type)
     return this->globals[name];
 }
 
+// emits main body
 llvm::Function* IRGenerator::emitMain(std::unique_ptr<AST::Instruction>& main)
 {
     std::vector<llvm::Type*> mainArgs; // empty for now
@@ -97,6 +101,7 @@ llvm::Function* IRGenerator::emitMain(std::unique_ptr<AST::Instruction>& main)
     return mainFunction;
 }
 
+// initializes LLVM module and builder
 IRGenerator::IRGenerator(std::string& moduleName) : builder(llvm::IRBuilder<>(this->context))
 {
     this->module = std::make_unique<llvm::Module>(moduleName, this->context);
@@ -107,6 +112,7 @@ void IRGenerator::generate(std::unique_ptr<AST::Program>& program)
     program->accept(*this);
 }
 
+// dumps LLVM IR assembly to stderr
 void IRGenerator::dumpModule()
 {
     this->module->dump();
@@ -126,6 +132,7 @@ void IRGenerator::visit(AST::ECInteger& integer)
     this->lastValue = llvm::ConstantInt::get(llvm::Type::getInt32Ty(this->context), integer.getValue(), "int");
 }
 
+// access from table of symbols
 void IRGenerator::visit(AST::EVariableAccess& variable)
 {
     llvm::Value* value;
@@ -218,6 +225,7 @@ void IRGenerator::visit(AST::EArrayAccess& access)
     access.getArray()->accept(*this);
     llvm::Value* array = this->lastValue;
 
+    // we use a single-index GEP since every memory block is dynamically allocated
     std::vector<llvm::Value*> gepIndex(1);
     access.getIndex()->accept(*this);
     gepIndex[0] = this->lastValue;;
@@ -226,6 +234,7 @@ void IRGenerator::visit(AST::EArrayAccess& access)
     this->lastValue = this->builder.CreateLoad(this->lastValue, "loadptr");
 }
 
+// calls the runtime's allocation function
 void IRGenerator::visit(AST::EArrayAllocation& allocation)
 {
     // Allocation types are the following: (manually done since it's extern "C"'d)
@@ -243,7 +252,6 @@ void IRGenerator::visit(AST::EArrayAllocation& allocation)
     else
         arguments[1] = llvm::ConstantInt::get(llvm::Type::getInt8Ty(this->context), 1);
     this->lastValue = this->builder.CreateCall(this->module->getFunction("pasclang_alloc"), arguments, "alloc");
-    //TODO: implement proper bitcasting of the address
 }
 
 void IRGenerator::visit(AST::Instruction& instruction) { }
@@ -260,6 +268,7 @@ void IRGenerator::visit(AST::IProcedureCall& call)
     this->lastValue = this->builder.CreateCall(callee, arguments);
 }
 
+// stores and makes sure value is properly casted for IR
 void IRGenerator::visit(AST::IVariableAssignment& assignment)
 {
     llvm::Value* lhs;
@@ -324,6 +333,7 @@ void IRGenerator::visit(AST::ICondition& condition)
     currentFunction->getBasicBlockList().push_back(branchFalse);
     this->builder.SetInsertPoint(branchFalse);
 
+    // note: if you don't check condition this will build but emit invalid IR and segfault
     if(condition.getFalse().get() != nullptr)
         condition.getFalse()->accept(*this);
 
@@ -402,6 +412,7 @@ void IRGenerator::visit(AST::Procedure& definition)
 
 void IRGenerator::visit(AST::Program& program)
 {
+    // add built-in functions
     std::vector<llvm::Type*> writelnArgument(1);
     writelnArgument[0] = llvm::Type::getInt32Ty(this->context);
     llvm::FunctionType* writelnType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context), writelnArgument, false);

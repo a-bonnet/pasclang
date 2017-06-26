@@ -8,7 +8,7 @@ namespace pasclang::Parsing {
 class Position {
     private:
         int line;
-        int bol; // beginning of line
+        int bol; // beginning of line, used to quote file in error report
         int offset;
         std::string& file;
 

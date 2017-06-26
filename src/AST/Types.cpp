@@ -5,6 +5,7 @@
 
 namespace pasclang::AST {
 
+// Returns the shared structure pointer to the requested type
 TableOfTypes::Type* TableOfTypes::get(TypeKind kind, std::uint32_t dimension)
 {
     auto resultKind = this->tableOfTypes.find(kind);

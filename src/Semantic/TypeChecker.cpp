@@ -136,6 +136,7 @@ void TypeChecker::visit(AST::ECInteger&)
     this->lastType = integerType;
 }
 
+// returns type of the accessed variable if defined, marks it as used
 void TypeChecker::visit(AST::EVariableAccess& variable)
 {
     if(this->locals.find(variable.getName()) != this->locals.end())
@@ -153,6 +154,7 @@ void TypeChecker::visit(AST::EVariableAccess& variable)
                 &variable.getLocation()->getStart(), &variable.getLocation()->getEnd());
 }
 
+// returns type of the unary operation if correct
 void TypeChecker::visit(AST::EUnaryOperation& operation)
 {
     operation.getExpression()->accept(*this);
@@ -170,6 +172,7 @@ void TypeChecker::visit(AST::EUnaryOperation& operation)
                 &operation.getExpression()->getLocation()->getEnd());
 }
 
+// returns type of the binary operation if correct
 void TypeChecker::visit(AST::EBinaryOperation& operation)
 {
     operation.getLeft()->accept(*this);
@@ -232,6 +235,7 @@ void TypeChecker::visit(AST::EBinaryOperation& operation)
 }
 
 // basically like IProcedureCall but with return type
+// checks actuals for expression type and returns function type if correct
 void TypeChecker::visit(AST::EFunctionCall& call)
 {
     // built-in function
@@ -294,6 +298,8 @@ void TypeChecker::visit(AST::EFunctionCall& call)
     this->lastType = procedure->get()->getResultType()->getType();
 }
 
+// checkes index for int type and returns accessed address type
+// returns
 void TypeChecker::visit(AST::EArrayAccess& access)
 {
     access.getIndex()->accept(*this);
@@ -305,6 +311,7 @@ void TypeChecker::visit(AST::EArrayAccess& access)
     this->lastType = this->ast->getTypes()->get(this->lastType->kind, this->lastType->dimension - 1);
 }
 
+// checks size expression for integer type and returns allocated array type
 void TypeChecker::visit(AST::EArrayAllocation& allocation)
 {
     allocation.getElements()->accept(*this);
@@ -320,6 +327,7 @@ void TypeChecker::visit(AST::EArrayAllocation& allocation)
 void TypeChecker::visit(AST::Instruction&) { }
 
 // basically like EFunctionCall but without return type
+// checks arguments for correct type and makes sure callee has no return type
 void TypeChecker::visit(AST::IProcedureCall& call)
 {
     // Built-in procedure
@@ -373,6 +381,7 @@ void TypeChecker::visit(AST::IProcedureCall& call)
     this->lastType = nullptr;
 }
 
+// checks expression type and variable type and marks variable as initialized
 void TypeChecker::visit(AST::IVariableAssignment& assignment)
 {
     AST::PrimitiveType* type = nullptr;
@@ -408,6 +417,7 @@ void TypeChecker::visit(AST::IVariableAssignment& assignment)
     }
 }
 
+// checks array dimension and index integer type and returns indexed expression type
 void TypeChecker::visit(AST::IArrayAssignment& assignment)
 {
     assignment.getArray()->accept(*this);
@@ -435,12 +445,14 @@ void TypeChecker::visit(AST::IArrayAssignment& assignment)
                 &assignment.getValue()->getLocation()->getEnd());
 }
 
+// checks each instruction in sequence
 void TypeChecker::visit(AST::ISequence& sequence)
 {
     for(std::unique_ptr<AST::Instruction>& instruction : sequence.getInstructions())
         instruction->accept(*this);
 }
 
+// checks condition for boolean type and checks instructions
 void TypeChecker::visit(AST::ICondition& condition)
 {
     condition.getCondition()->accept(*this);
@@ -455,6 +467,7 @@ void TypeChecker::visit(AST::ICondition& condition)
         condition.getFalse()->accept(*this);
 }
 
+// checks condition for boolean type and checks instruction
 void TypeChecker::visit(AST::IRepetition& repetition)
 {
     repetition.getCondition()->accept(*this);
@@ -464,6 +477,7 @@ void TypeChecker::visit(AST::IRepetition& repetition)
     repetition.getInstructions()->accept(*this);
 }
 
+// defines formals, locals and result type/variable and checks body
 void TypeChecker::visit(AST::Procedure& definition)
 {
     this->localUsage.clear();
@@ -515,6 +529,7 @@ void TypeChecker::visit(AST::Procedure& definition)
     }
 }
 
+// defines and checks globals and procedures and checks body
 void TypeChecker::visit(AST::Program& program)
 {
     this->globalInitialized.clear();

@@ -10,6 +10,7 @@
 
 namespace pasclang::AST {
 
+// Holds shared types for a program. Only creates new types when a new type is requested.
 class TableOfTypes
 {
     public:

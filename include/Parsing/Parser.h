@@ -64,6 +64,7 @@ class Parser {
                 this->syntaxError(tokens);
         }
 
+        // Error handling and panic mode
         void syntaxError(const std::vector<TokenType> expectedTokens);
         void lookForAdditionalErrors();
 
