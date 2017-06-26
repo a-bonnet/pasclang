@@ -1,4 +1,6 @@
-# The Pasclang Pseudo-Pascal compiler
+# [The Pasclang Pseudo-Pascal compiler](https://gitlab.com/abonnet/pasclang/)
+
+
 
 ## The project
 
@@ -6,7 +8,7 @@ Pasclang is a compiler for the educational language Pseudo-Pascal. It uses the L
 
 ## The Pseudo-Pascal language
 
-Pseudo-Pascal is a Pascal dialect which features similar syntax and semantics but has several limitations. For example, only single-file programs can be compiled. The supported types are integers and booleans and only two built-in functions exist: `readln()` which reads an integer from the standard input, and `writeln(x)` where `x` is an integer printer to the standard output. The [test directory](test/) features several examples of programs written in Pseudo-Pascal. More examples will be added as features get implemented.
+Pseudo-Pascal is a Pascal dialect which features similar syntax and semantics but has several limitations. For example, only single-file programs can be compiled. The supported types are integers and booleans and only three built-in functions exist: `readln()` which reads an integer from the standard input as well as `write(x)` and `writeln(x)` where `x` is an integer printer to the standard output with or with no new line. The [test directory](test/) features several examples of programs written in Pseudo-Pascal. More examples will be added as features get implemented.
 For those who are not familiar with the language, here is a sample program that computes the given Fibonacci number until 0 is given:
 
 ```pascal
@@ -147,19 +149,19 @@ Pasclang is developed and tested on an amd64 Linux installation. It is known to 
 
 ## Source tree
 
-### include
+### [include](include/)
 
 The `include` folder contains the header files necessary for the compiler's development and to use the project as a library. Currently these aren't installed with the `install` target. It is split in subfolders each corresponding to a namespace.
 
-### src
+### [src](src/)
 
 The `src` directory contains the sources for object files organized the same way as header files. Only the driver's entry point (`main`) is not in the `pasclang` namespace and thus lies in the root of `src`.
 
-### rt
+### [rt](rt/)
 
 This is the source directory for the runtime library of Pseudo-Pascal. The driver statically links each executable to the generated `libpasclang-rt.a` archive to provide the functions `readln`, `writeln` and the procedures required for dynamic memory allocation of arrays.
 
-### test
+### [test](test/)
 
 Finally we have the Pseudo-Pascal source files used for testing. During the test each file `test.pp` is built, then given an input file `test.in`, the output is compared to `test.out` in order to check whether the test passed or failed.
 
