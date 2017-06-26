@@ -52,10 +52,39 @@ void Parser::syntaxError(const std::vector<TokenType> expectedTokens)
                 errorMessage += ", ";
         }
     }
-    this->reporter->message(Message::MessageType::Error, errorMessage, &this->peek().getLocation().getStart(),
-            &this->peek().getLocation().getEnd());
 
-    this->errorHappened = true;
+    // Unexpected EOF while parsing
+    if(this->peek().getType() == TokenType::ENDFILE)
+        this->reporter->message(Message::MessageType::Error, errorMessage, nullptr, nullptr);
+    // Wrong syntax
+    else
+        this->reporter->message(Message::MessageType::Error, errorMessage, &this->peek().getLocation().getStart(),
+                &this->peek().getLocation().getEnd());
+
+    if(!this->errorHappened)
+    {
+        this->errorHappened = true;
+        std::string noteMessage = "Pasclang will now look for additional syntax errors. However ";
+        noteMessage += "since the input already contains an error, some reports may be wrong.";
+        this->reporter->message(Message::MessageType::Note, noteMessage, nullptr, nullptr);
+    }
+
+    while(this->peek().getType() != TokenType::ENDFILE)
+    {
+        if(this->match({TokenType::BEGIN, TokenType::DO, TokenType::THEN, TokenType::ELSE}))
+            this->instruction();
+        else if(this->match({TokenType::COLON, TokenType::NEW}))
+            this->primitiveType();
+        else if(this->match({TokenType::WHILE, TokenType::IF, TokenType::ASSIGN, TokenType::LEFTPAR, TokenType::LEFTBRACK}))
+            this->expression();
+        else if(this->match({TokenType::FUNCTION, TokenType::PROCEDURE}))
+            this->procedure();
+        else if(this->match(TokenType::VAR))
+            this->variableDeclaration();
+
+        this->advance();
+    }
+
     throw PasclangException(ExitCode::SyntaxError);
 }
 

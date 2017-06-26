@@ -15,7 +15,7 @@ void TypeChecker::wrongType(const TOT::Type* type, const TOT::Type* expected, co
     message += (type->kind == TOT::TypeKind::Boolean ? "bool" : "int");
     message += "["; message += std::to_string(type->dimension); message += "] ";
     message += "instead of "; message += (expected->kind == TOT::TypeKind::Boolean ? "bool" : "int");
-    message += "["; message += std::to_string(type->dimension); message += "] ";
+    message += "["; message += std::to_string(expected->dimension); message += "] ";
     this->reporter->message(Message::MessageType::Error, message, start, end);
     this->errorHappened = true;
 }
@@ -44,6 +44,15 @@ void TypeChecker::undefinedSymbol(const std::string& symbol, const Parsing::Posi
 void TypeChecker::redefiningSymbol(const std::string& symbol, const Parsing::Position* start, const Parsing::Position* end)
 {
     std::string message = "redefinition of symbol " + symbol;
+    this->reporter->message(Message::MessageType::Error, message, start, end);
+    this->errorHappened = true;
+}
+
+void TypeChecker::invalidAssignment(const TOT::Type* type, const Parsing::Position* start, const Parsing::Position* end)
+{
+    std::string message = "invalid assignment to type ";
+    message += message += (type->kind == TOT::TypeKind::Boolean ? "bool" : "int");
+    message += "["; message += std::to_string(type->dimension); message += "] ";
     this->reporter->message(Message::MessageType::Error, message, start, end);
     this->errorHappened = true;
 }
@@ -132,19 +141,11 @@ void TypeChecker::visit(AST::EVariableAccess& variable)
     if(this->locals.find(variable.getName()) != this->locals.end())
     {
         this->lastType = this->locals[variable.getName()]->getType();
-        if(!this->localInitialized[variable.getName()])
-            this->uninitializedValue(variable.getName(), this->currentFunction,
-                    &variable.getLocation()->getStart(),
-                    &variable.getLocation()->getEnd());
         this->localUsage[variable.getName()] = true;
     }
     else if(this->globals.find(variable.getName()) != this->globals.end())
     {
         this->lastType = this->globals[variable.getName()]->getType();
-        if(!this->globalInitialized[variable.getName()])
-            this->uninitializedValue(variable.getName(), this->currentFunction,
-                    &variable.getLocation()->getStart(),
-                    &variable.getLocation()->getEnd());
         this->globalUsage[variable.getName()] = true;
     }
     else
@@ -326,14 +327,15 @@ void TypeChecker::visit(AST::IProcedureCall& call)
     {
         if(call.getActuals().size() != 1)
             this->invalidArity(call.getName(),
-                    &call.getActuals().begin()->get()->getLocation()->getStart(),
-                    &call.getActuals().end()->get()->getLocation()->getEnd());
+                    &call.getLocation()->getStart(),
+                    &call.getLocation()->getEnd());
 
         call.getActuals().front()->accept(*this);
+
         if(this->lastType != integerType)
             this->wrongType(this->lastType, integerType,
-                    &call.getActuals().begin()->get()->getLocation()->getStart(),
-                    &call.getActuals().end()->get()->getLocation()->getEnd());
+                    &call.getActuals().front()->getLocation()->getStart(),
+                    &call.getActuals().front()->getLocation()->getEnd());
 
         this->lastType = nullptr;
         return;
@@ -411,9 +413,11 @@ void TypeChecker::visit(AST::IArrayAssignment& assignment)
     assignment.getArray()->accept(*this);
     const TOT::Type* arrayType = this->lastType;
     if(arrayType->dimension == 0)
-        this->wrongType(arrayType, arrayType,
+    {
+        this->invalidAssignment(arrayType,
                 &assignment.getArray()->getLocation()->getStart(),
                 &assignment.getArray()->getLocation()->getEnd());
+    }
 
     assignment.getIndex()->accept(*this);
     const TOT::Type* indexType = this->lastType;
@@ -426,7 +430,7 @@ void TypeChecker::visit(AST::IArrayAssignment& assignment)
     const TOT::Type* valueType = this->lastType;
     const TOT::Type* indexedExpressionType = this->ast->getTypes()->get(arrayType->kind, arrayType->dimension - 1);
     if(indexedExpressionType != valueType)
-        this->wrongType(indexedExpressionType, valueType,
+        this->wrongType(valueType, indexedExpressionType,
                 &assignment.getValue()->getLocation()->getStart(),
                 &assignment.getValue()->getLocation()->getEnd());
 }

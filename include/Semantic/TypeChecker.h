@@ -37,6 +37,7 @@ class TypeChecker : public AST::Visitor
         void invalidArity(std::string& name, const Parsing::Position* start, const Parsing::Position* end);
         void undefinedSymbol(const std::string& symbol, const Parsing::Position* start, const Parsing::Position* end);
         void redefiningSymbol(const std::string& symbol, const Parsing::Position* start, const Parsing::Position* end);
+        void invalidAssignment(const TOT::Type* type, const Parsing::Position* start, const Parsing::Position* end);
         void uninitializedValue(const std::string& symbol, const std::string& function, const Parsing::Position* start, const Parsing::Position* end);
         void unusedValue(const std::string& symbol, const std::string& function, const Parsing::Position* start, const Parsing::Position* end);
 

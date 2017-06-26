@@ -63,13 +63,13 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
             if(start->getLine() == end->getLine())
                 output += "at line " + std::to_string(start->getLine());
             else
-                output += "starting from line " + std::to_string(start->getLine());
+                output += "from line " + std::to_string(start->getLine());
         }
         else
-            output += "starting from line " + std::to_string(start->getLine());
+            output += "from line " + std::to_string(start->getLine());
     }
     else if(end != nullptr)
-        output += "up to line " + std::to_string(end->getLine());
+        output += "to line " + std::to_string(end->getLine());
 
     output += "\n\t" + message + "\n";
 
@@ -78,26 +78,22 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
     file.open(this->getFileName(), file.in);
     char currentChar = 0;
 
-    // Look into this
-    std::cout << output << std::endl;
-    return;
-
-    file.seekg(start->getBeginningOfLine(), file.beg);
-
     if(start != nullptr)
     {
+        file.seekg(start->getBeginningOfLine(), file.beg);
         int lengthToEndOfLine = 0;
 
         do {
             currentChar = file.get();
             buffer += currentChar;
-        } while(currentChar != '\n' && !file.eof());
+        } while(currentChar != '\n' && currentChar != EOF);
 
         file.seekg(start->getOffset(), file.beg);
-        do {
+        while(currentChar != '\n' && currentChar != EOF)
+        {
             currentChar = file.get();
             lengthToEndOfLine++;
-        } while(currentChar != '\n' && !file.eof());
+        }
 
         for(int i = 0 ; i < start->getOffset() - start->getBeginningOfLine() ; i++)
             buffer += ' ';
@@ -108,15 +104,10 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
             for(int i = 0 ; i < end->getOffset() - start->getOffset() ; i++)
                 buffer += '^';
         }
-        if(end != nullptr && end->getLine() == start->getLine() + 1)
-        {
-            for(int i = 0 ; i < lengthToEndOfLine - 2 ; i++)
-                buffer += '~';
-        }
-
 
         file.close();
     }
+
     std::cout << output << '\n' << buffer << std::endl;
 }
 
