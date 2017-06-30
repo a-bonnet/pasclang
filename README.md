@@ -1,6 +1,6 @@
 # [The Pasclang Pseudo-Pascal compiler](https://gitlab.com/abonnet/pasclang/)
 
-[Version Française/French version](README-fr.md]
+[Version Française/French version](README-fr.md)
 
 ## The project
 
@@ -36,7 +36,7 @@ end.
 
 ## The compiler
 
-The current stable version is [Pasclang 1.0](https://gitlab.com/abonnet/pasclang/tree/1.0). Latest development version can be found in the [master branch](https://gitlab.com/abonnet/pasclang/tree/master).
+The current stable version is [Pasclang 1.1](https://gitlab.com/abonnet/pasclang/tree/1.1). Latest development version can be found in the [master branch](https://gitlab.com/abonnet/pasclang/tree/master).
 
 The compiler operates via successive passes. The first one consists of parsing the input and producing the corresponding syntax tree (lexical and syntactic analyses). The next step is done with the type checker (semantic analysis) before using LLVM to produce the output.
 
