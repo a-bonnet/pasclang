@@ -38,7 +38,7 @@ end.
 
 La version stable actuelle est [Pasclang 1.1](https://gitlab.com/abonnet/pasclang/tree/1.1). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
 
-Le compilateur agit par passages successives comme c'est le cas de la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
+Le compilateur agit par étapes successives comme c'est le cas de la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
 
 Un des objectifs principaux est de fournir des diagnostiques utiles, par exemple voici un programme syntaxiquement incorrect et ses diagnostiques :
 ```pascal
