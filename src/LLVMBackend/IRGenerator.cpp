@@ -369,6 +369,7 @@ void IRGenerator::visit(AST::IRepetition& repetition)
 
 void IRGenerator::visit(AST::Procedure& definition)
 {
+    this->locals.clear();
     llvm::Function* procedure = this->module->getFunction(definition.getName());
 
     auto formalsIterator = definition.getFormals().begin();
