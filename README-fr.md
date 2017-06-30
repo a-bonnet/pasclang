@@ -4,12 +4,12 @@
 
 ## Le projet
 
-Pasclang est un compilateur pour le langage éducatif Pseudo-Pascal utilisant LLVM pour générer le code machine. L'ambition est de fournir un exemple d'implémentation d'un simple langage impératif utilisant CMake et LLVM et évitant les bibliothèques extérieurs au possible.
+Pasclang est un compilateur pour le langage éducatif Pseudo-Pascal utilisant LLVM pour générer le code machine. L'ambition est de fournir un exemple d'implémentation d'un simple langage impératif utilisant CMake et LLVM et évitant les bibliothèques extérieures autant que possible.
 
 ## Le langage Pseudo-Pascal
 
-Pseudo-Pascal est un dialecte de Pascal possédant une syntaxe et une sémantique opérationelle similaire mais limitées. Par exemple il ne supporte que la compilation de fichiers uniques (une seule unité de translation). Seules quelques fonctions de base sont implémentées : `writeln()`, `write()` et `readln()`. Les types supportés sont les entiers et les booléens. Le dossier [test](test/) contient plusieurs examples de programmes utilisant le langage.
-Pour ceux qui n'ont pas de connaissance en Pascal, voici un exemple de programme calculant les termes de la suite de Fibonacci et s'arrêtant lorsque l'on donne 0 :
+Pseudo-Pascal est un dialecte de Pascal possédant une syntaxe et une sémantique opérationelle similaires mais limitées. Par exemple il ne supporte que la compilation de fichiers uniques (une seule unité de translation). Seules quelques fonctions de base sont implémentées : `writeln()`, `write()` et `readln()`. Les types supportés sont les entiers et les booléens. Le dossier [test](test/) contient plusieurs examples de programmes utilisant le langage.
+Pour ceux qui ne connaissent pas du tout Pascal, voici un exemple de programme calculant des termes de la suite de Fibonacci et s'arrêtant lorsque l'on donne 0 :
 
 ```pascal
 program
@@ -38,7 +38,7 @@ end.
 
 La version stable actuelle est [Pasclang 1.1](https://gitlab.com/abonnet/pasclang/tree/1.1). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
 
-Le compilateur agit par passes successives comme c'est le cas de la plupart des compilateurs modernes. La première passe correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait inutile dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
+Le compilateur agit par passages successives comme c'est le cas de la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
 
 Un des objectifs principaux est de fournir des diagnostiques utiles, par exemple voici un programme syntaxiquement incorrect et ses diagnostiques :
 ```pascal
@@ -130,7 +130,7 @@ error: at line 10
 ## Compiler
 
 Pasclang utilise [CMake](https://cmake.org) comme système de compilation car c'est également celui requis pour LLVM.
-Afin de compiler Pasclang, il est nécessaire d'installer [LLVM](http://llvm.org/docs/CMake.html) en le compilant ou le téléchargeant. Il faut ensuite s'assurer qu'il soit visible par CMake, ce qui est habituellement le cas lorsqu'installé dans l'arborescence classique `/usr/...` ou dans le répertoire ciblé par la variable d'environnement `LLVM_DIR`. Ensuite les commandes sont très simples, par exemple depuis le répertoire racine :
+Afin de compiler Pasclang, il est nécessaire d'installer [LLVM](http://llvm.org/docs/CMake.html) en le compilant ou le téléchargeant. Il faut ensuite s'assurer que LLVM soit visible par CMake, ce qui est habituellement le cas lorsqu'installé dans l'arborescence classique `/usr/...` ou dans le répertoire ciblé par la variable d'environnement `LLVM_DIR`. Ensuite les commandes sont très simples, par exemple depuis le répertoire racine :
 
 ```bash
 mkdir build
@@ -151,7 +151,7 @@ Le développement et les tests ont lieu sur une distribution Linux sur architect
 
 ### Problèmes connus dans la dernière version stable
 
-La dernières révision est Pasclang 1.0. Voici une liste de problèmes connus en train d'être résolus pour la prochaine révision.
+La dernière révision stable est Pasclang 1.1. Voici une liste de problèmes connus en train d'être résolus pour la prochaine révision.
 
 * Un mauvais usage du compilateur mène parfois à des erreurs de segmentation ou des boucles infinies, par exemple lorsqu'on donne un fichier qui n'existe pas en entrée. Des routines sont en train d'être implémentées pour ces cas de mauvais usage.
 * Les opérateurs logiques ne court-circuitent pas lorsque le résultat est connu avant l'évaluation de tous les termes. Ce comportement est incorrect pour la sémantique opérationnelle de Pseudo-Pascal est et en train d'être corrigé. En attendant, le test correspondant a été désactivé.
@@ -176,7 +176,7 @@ Les tests sont exécutés en compilant chaque fichier .pp, puis en comparant la 
 
 ## Remerciements
 
-* [Le cours de Luc Maranget](http://gallium.inria.fr/~maranget/X/compil/poly/index.html) a été la raison de mon choix de langage.
-* [François Pottier](http://cristal.inria.fr/~fpottier) qui a eu l'amabilité de me permettre d'utiliser les tests de son [compilateur pour MIPS](http://cristal.inria.fr/~fpottier/X/INF564/petit.tar.gz). Il s'agit des tests disponibles dans la cible `run makemoretests`.
+* [Le cours de Luc Maranget](http://gallium.inria.fr/~maranget/X/compil/poly/index.html) a été la raison de mon choix de ce langage.
+* [François Pottier](http://cristal.inria.fr/~fpottier) qui a eu l'amabilité de me permettre d'utiliser les tests de son [compilateur pour MIPS](http://cristal.inria.fr/~fpottier/X/INF564/petit.tar.gz). Il s'agit des tests disponibles dans la cible `make runmoretests`.
 * Les auteurs du tutoriel [LLVM Kaleidoscope](http://llvm.org/docs/tutorial/index.html) pour fournir une introduction détaillée à la bibliothèque LLVM.
 
