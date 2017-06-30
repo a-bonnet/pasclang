@@ -27,7 +27,7 @@ llvm_map_components_to_libnames(LLVM_LIBS support core irreader native)
 target_link_libraries(pasclang ${LLVM_LIBS})
 
 add_custom_command(TARGET pasclang POST_BUILD COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
-    "To run tests, type make runtest.")
+    "To run tests, type make runtests or make runmoretests.")
 
 install(TARGETS pasclang
     RUNTIME DESTINATION bin

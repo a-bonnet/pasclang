@@ -160,49 +160,69 @@ void IRGenerator::visit(AST::EUnaryOperation& operation)
 void IRGenerator::visit(AST::EBinaryOperation& operation)
 {
     llvm::Value *lhs, *rhs;
-    operation.getLeft()->accept(*this);
-    lhs = this->lastValue;
-    operation.getRight()->accept(*this);
-    rhs = this->lastValue;
 
-    switch(operation.getType())
+    if(operation.getType() != AST::EBinaryOperation::Type::BinaryLogicalOr &&
+            operation.getType() != AST::EBinaryOperation::Type::BinaryLogicalAnd)
     {
-        case AST::EBinaryOperation::Type::BinaryAddition:
-            this->lastValue = this->builder.CreateAdd(lhs, rhs, "add");
-            break;
-        case AST::EBinaryOperation::Type::BinarySubtraction:
-            this->lastValue = this->builder.CreateSub(lhs, rhs, "sub");
-            break;
-        case AST::EBinaryOperation::Type::BinaryMultiplication:
-            this->lastValue = this->builder.CreateMul(lhs, rhs, "mul");
-            break;
-        case AST::EBinaryOperation::Type::BinaryDivision:
-            this->lastValue = this->builder.CreateSDiv(lhs, rhs, "div");
-            break;
-        case AST::EBinaryOperation::Type::BinaryLogicalLessThan:
-            this->lastValue = this->builder.CreateICmpSLT(lhs, rhs, "lt");
-            break;
-        case AST::EBinaryOperation::Type::BinaryLogicalLessEqual:
-            this->lastValue = this->builder.CreateICmpSLE(lhs, rhs, "le");
-            break;
-        case AST::EBinaryOperation::Type::BinaryLogicalGreaterThan:
-            this->lastValue = this->builder.CreateICmpSGT(lhs, rhs, "gt");
-            break;
-        case AST::EBinaryOperation::Type::BinaryLogicalGreaterEqual:
-            this->lastValue = this->builder.CreateICmpSGE(lhs, rhs, "ge");
-            break;
-        case AST::EBinaryOperation::Type::BinaryLogicalAnd:
-            this->lastValue = this->builder.CreateAnd(lhs, rhs, "and");
-            break;
-        case AST::EBinaryOperation::Type::BinaryLogicalOr:
-            this->lastValue = this->builder.CreateOr(lhs, rhs, "or");
-            break;
-        case AST::EBinaryOperation::Type::BinaryEquality:
-            this->lastValue = this->builder.CreateICmpEQ(lhs, rhs, "eq");
-            break;
-        case AST::EBinaryOperation::Type::BinaryNonEquality:
-            this->lastValue = this->builder.CreateICmpNE(lhs, rhs, "neq");
-            break;
+        operation.getLeft()->accept(*this);
+        lhs = this->lastValue;
+        operation.getRight()->accept(*this);
+        rhs = this->lastValue;
+
+        switch(operation.getType())
+        {
+            case AST::EBinaryOperation::Type::BinaryAddition:
+                this->lastValue = this->builder.CreateAdd(lhs, rhs, "add");
+                break;
+            case AST::EBinaryOperation::Type::BinarySubtraction:
+                this->lastValue = this->builder.CreateSub(lhs, rhs, "sub");
+                break;
+            case AST::EBinaryOperation::Type::BinaryMultiplication:
+                this->lastValue = this->builder.CreateMul(lhs, rhs, "mul");
+                break;
+            case AST::EBinaryOperation::Type::BinaryDivision:
+                this->lastValue = this->builder.CreateSDiv(lhs, rhs, "div");
+                break;
+            case AST::EBinaryOperation::Type::BinaryLogicalLessThan:
+                this->lastValue = this->builder.CreateICmpSLT(lhs, rhs, "lt");
+                break;
+            case AST::EBinaryOperation::Type::BinaryLogicalLessEqual:
+                this->lastValue = this->builder.CreateICmpSLE(lhs, rhs, "le");
+                break;
+            case AST::EBinaryOperation::Type::BinaryLogicalGreaterThan:
+                this->lastValue = this->builder.CreateICmpSGT(lhs, rhs, "gt");
+                break;
+            case AST::EBinaryOperation::Type::BinaryLogicalGreaterEqual:
+                this->lastValue = this->builder.CreateICmpSGE(lhs, rhs, "ge");
+                break;
+            case AST::EBinaryOperation::Type::BinaryEquality:
+                this->lastValue = this->builder.CreateICmpEQ(lhs, rhs, "eq");
+                break;
+            case AST::EBinaryOperation::Type::BinaryNonEquality:
+                this->lastValue = this->builder.CreateICmpNE(lhs, rhs, "neq");
+                break;
+            default:
+                break;
+        }
+    }
+    // TODO: Short-circuiting logical operators
+    else if(operation.getType() == AST::EBinaryOperation::Type::BinaryLogicalOr)
+    {
+        operation.getLeft()->accept(*this);
+        lhs = this->lastValue;
+        operation.getRight()->accept(*this);
+        rhs = this->lastValue;
+
+        this->lastValue = this->builder.CreateOr(lhs, rhs, "or_lhs");
+    }
+    else if(operation.getType() == AST::EBinaryOperation::Type::BinaryLogicalAnd)
+    {
+        operation.getLeft()->accept(*this);
+        lhs = this->lastValue;
+        operation.getRight()->accept(*this);
+        rhs = this->lastValue;
+
+        this->lastValue = this->builder.CreateAnd(lhs, rhs, "and_lhs");
     }
 }
 
@@ -268,7 +288,7 @@ void IRGenerator::visit(AST::IProcedureCall& call)
     this->lastValue = this->builder.CreateCall(callee, arguments);
 }
 
-// stores and makes sure value is properly casted for IR
+// stores and makes sure value is properly casted for IR correctness
 void IRGenerator::visit(AST::IVariableAssignment& assignment)
 {
     llvm::Value* lhs;
@@ -398,6 +418,16 @@ void IRGenerator::visit(AST::Procedure& definition)
     {
         this->locals[local.first] = this->builder.CreateAlloca(this->astToLlvmType(local.second.get()),
                 nullptr, local.first);
+
+        // Pseudo-Pascal semantics give default value to local variables too
+        llvm::Value* defaultValue;
+        if(local.second.get()->getType()->dimension > 0)
+            defaultValue = llvm::ConstantPointerNull::get(static_cast<llvm::PointerType*>(this->astToLlvmType(local.second.get())));
+        else if(local.second.get()->getType()->kind == AST::TableOfTypes::TypeKind::Integer)
+            defaultValue = llvm::ConstantInt::getNullValue(this->astToLlvmType(local.second.get()));
+        else
+            defaultValue = llvm::ConstantInt::getFalse(this->context);
+        this->builder.CreateStore(defaultValue, this->locals[local.first]);
     }
 
     definition.getBody()->accept(*this);
@@ -413,17 +443,20 @@ void IRGenerator::visit(AST::Procedure& definition)
 
 void IRGenerator::visit(AST::Program& program)
 {
-    // add built-in functions
+    // Add built-in functions
+    // write and writeln
     std::vector<llvm::Type*> writelnArgument(1);
     writelnArgument[0] = llvm::Type::getInt32Ty(this->context);
     llvm::FunctionType* writelnType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context), writelnArgument, false);
     llvm::Function::Create(writelnType, llvm::Function::ExternalLinkage, "writeln", this->module.get());
     llvm::Function::Create(writelnType, llvm::Function::ExternalLinkage, "write", this->module.get());
+    // allocation from new
     std::vector<llvm::Type*> allocArguments(2);
     allocArguments[0] = llvm::Type::getInt32Ty(this->context);
     allocArguments[1] = llvm::Type::getInt8Ty(this->context);
     llvm::FunctionType* allocType = llvm::FunctionType::get(llvm::Type::getInt8PtrTy(this->context), allocArguments, false);
     llvm::Function::Create(allocType, llvm::Function::ExternalLinkage, "pasclang_alloc", this->module.get());
+    // readln
     llvm::FunctionType* readlnType = llvm::FunctionType::get(llvm::Type::getInt32Ty(this->context), false);
     llvm::Function::Create(readlnType, llvm::Function::ExternalLinkage, "readln", this->module.get());
 

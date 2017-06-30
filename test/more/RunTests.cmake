@@ -20,4 +20,3 @@ foreach(SOURCE_FILE ${TEST_SOURCES})
 endforeach(SOURCE_FILE ${TEST_SOURCES})
 
 message(STATUS "All tests passed if CMake reports no error.")
-

@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 
     if(argc == 1)
     {
-        std::cout << "Usage: " << argv[0] << " imputable.pp -o outputfile" << "\n"
+        std::cout << "Usage: " << argv[0] << " inputfile.pp -o outputfile" << "\n"
             << "Options :\n\t-O0, -O1, -O2... - optimization level (only -O0 and -O1 actually do something for now)\n" <<
             "\t-S - emit LLVM IR assembly file to output instead of executable file\n" <<
             "\t-c - emit object file to output instead of executable file\n" <<
@@ -132,9 +132,9 @@ int main(int argc, char* argv[])
             LLVMBackend::IRGenerator ir(moduleName);
             ir.generate(ast);
             LLVMBackend::IROptimizer opt(optimizationLevel, ir.getModule(), reporter.get());
-            LLVMBackend::ObjectGenerator obj(assembly, outputFile, ir.getModule(), reporter.get());
             if(dump)
                 ir.getModule()->dump();
+            LLVMBackend::ObjectGenerator obj(assembly, outputFile, ir.getModule(), reporter.get());
             if(link)
             {
 #warning Placeholder until some fork/execlp method (and equivalent on non-Unix) is used instead
