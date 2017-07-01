@@ -205,24 +205,83 @@ void IRGenerator::visit(AST::EBinaryOperation& operation)
                 break;
         }
     }
-    // TODO: Short-circuiting logical operators
+
+    // Short-circuiting logical operators, the LLVM pseudo code is the following:
+    // A or B:
+    // result in %c
+    // entry:
+    //    %0 alloca i1 result
+    //    store i1 1, %0
+    //    %a = i1 evaluate(A)
+    //    br %a end, next
+    // next:       ; pred: entry
+    //    %b = i1 evaluate(B)
+    //    br %b end, false
+    // false:      ; pred: next
+    //    store i1 0, %0
+    //    br end
+    // end:        ; pred: entry, next, false
+    //    %c = load %0
+    // and similar for and
     else if(operation.getType() == AST::EBinaryOperation::Type::BinaryLogicalOr)
     {
+        llvm::AllocaInst* result = this->builder.CreateAlloca(llvm::Type::getInt1Ty(this->context), nullptr, "or_result");
+        this->builder.CreateStore(llvm::ConstantInt::getTrue(this->context), result);
+
         operation.getLeft()->accept(*this);
         lhs = this->lastValue;
+
+        llvm::Function* currentFunction = this->builder.GetInsertBlock()->getParent();
+
+        llvm::BasicBlock* next = llvm::BasicBlock::Create(this->context, "next", currentFunction);
+        llvm::BasicBlock* final = llvm::BasicBlock::Create(this->context, "final");
+        llvm::BasicBlock* end = llvm::BasicBlock::Create(this->context, "end");
+
+        this->builder.CreateCondBr(lhs, end, next);
+        this->builder.SetInsertPoint(next);
+
         operation.getRight()->accept(*this);
         rhs = this->lastValue;
+        this->builder.CreateCondBr(rhs, end, final);
+        currentFunction->getBasicBlockList().push_back(final);
+        this->builder.SetInsertPoint(final);
 
-        this->lastValue = this->builder.CreateOr(lhs, rhs, "or_lhs");
+        this->builder.CreateStore(llvm::ConstantInt::getFalse(this->context), result);
+        this->builder.CreateBr(end);
+        currentFunction->getBasicBlockList().push_back(end);
+        this->builder.SetInsertPoint(end);
+
+        this->lastValue = this->builder.CreateLoad(result, "logicalor");
     }
     else if(operation.getType() == AST::EBinaryOperation::Type::BinaryLogicalAnd)
     {
+        llvm::AllocaInst* result = this->builder.CreateAlloca(llvm::Type::getInt1Ty(this->context), nullptr, "end_result");
+        this->builder.CreateStore(llvm::ConstantInt::getFalse(this->context), result);
+
         operation.getLeft()->accept(*this);
         lhs = this->lastValue;
+
+        llvm::Function* currentFunction = this->builder.GetInsertBlock()->getParent();
+
+        llvm::BasicBlock* next = llvm::BasicBlock::Create(this->context, "next", currentFunction);
+        llvm::BasicBlock* final = llvm::BasicBlock::Create(this->context, "final");
+        llvm::BasicBlock* end = llvm::BasicBlock::Create(this->context, "end");
+
+        this->builder.CreateCondBr(lhs, next, end);
+        this->builder.SetInsertPoint(next);
+
         operation.getRight()->accept(*this);
         rhs = this->lastValue;
+        this->builder.CreateCondBr(rhs, final, end);
+        currentFunction->getBasicBlockList().push_back(final);
+        this->builder.SetInsertPoint(final);
 
-        this->lastValue = this->builder.CreateAnd(lhs, rhs, "and_lhs");
+        this->builder.CreateStore(llvm::ConstantInt::getTrue(this->context), result);
+        this->builder.CreateBr(end);
+        currentFunction->getBasicBlockList().push_back(end);
+        this->builder.SetInsertPoint(end);
+
+        this->lastValue = this->builder.CreateLoad(result, "logicaland");
     }
 }
 
@@ -257,7 +316,7 @@ void IRGenerator::visit(AST::EArrayAccess& access)
 // calls the runtime's allocation function
 void IRGenerator::visit(AST::EArrayAllocation& allocation)
 {
-    // Allocation types are the following: (manually done since it's extern "C"'d)
+    // Allocation types are the following: (manually done since it'Àkls extern "C"'d)
     //  1 is for booleans
     //  2 is for integers
     //  3 is for pointers (aka multidimensional arrays)
