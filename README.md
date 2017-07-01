@@ -154,7 +154,7 @@ Pasclang is developed and tested on an amd64 Linux installation. It is known to 
 The latest Pasclang revision is 1.0. Here is a list of currently known problems that are being worked on for the next revision.
 
 * The handling of wrong input isn't fully implemented (e.g. giving an unexisting file as input). Segfaults or hanging might happen in case of wrong usage.
-* Logical operators do not short circuit yet (as opposed to what's specified in Pseudo-Pascal's operational semantics). The corresponding test has been disabled until the proper behavior gets implemented.
+* Logical operators do not short circuit yet (as opposed to what's specified in Pseudo-Pascal's operational semantics). The corresponding test has been disabled until the proper behavior gets implemented. _Note_: this has been fixed in the latest development version and the test has been re-enabled.
 
 ## Source tree
 
@@ -177,6 +177,6 @@ Finally we have the Pseudo-Pascal source files used for testing. During the test
 ## Acknowledgements
 
 * [Luc Maranget's course](http://gallium.inria.fr/~maranget/X/compil/poly/index.html) was the main reason I chose Pseudo-Pascal (in French).
-* [François Pottier](http://cristal.inria.fr/~fpottier) kindly allowed me to use his [MIPS compiler](http://cristal.inria.fr/~fpottier/X/INF564/petit.tar.gz)'s tests for Pasclang. They are available using the `make runmoretests` target.
+* [François Pottier](http://cristal.inria.fr/~fpottier) kindly allowed me to use his [MIPS compiler](http://cristal.inria.fr/~fpottier/X/INF564/petit.tar.gz)'s tests for Pasclang. They are available using the `make runmoretests` command.
 * The [LLVM Kaleidoscope Tutorial](http://llvm.org/docs/tutorial/index.html) is a thoroughly explained document on how to use the LLVM C++ and OCaml API for a functional programming language.
 
