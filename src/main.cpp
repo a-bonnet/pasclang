@@ -99,12 +99,29 @@ int main(int argc, char* argv[])
         reporter->message(Message::MessageType::Error, errorMessage, nullptr, nullptr);
         return ExitCode::WrongUsage;
     }
+
     if(needOutput && outputName == "")
     {
         std::string errorMessage = "no output file given, execute pasclang with no argument for usage";
         reporter->message(Message::MessageType::Error, errorMessage, nullptr, nullptr);
         return ExitCode::WrongUsage;
     }
+    if(outputName[0] == '-')
+    {
+        std::string errorMessage = "invalid output file format " + outputName;
+        reporter->message(Message::MessageType::Error, errorMessage, nullptr, nullptr);
+        return ExitCode::WrongUsage;
+    }
+
+    // Checking if file exists and can be read
+    std::ifstream fileCheck(inputFile.c_str());
+    if(!fileCheck.good())
+    {
+        std::string errorMessage = "could not open file " + inputFile;
+        reporter->message(Message::MessageType::Error, errorMessage, nullptr, nullptr);
+        return ExitCode::InternalError;
+    }
+    fileCheck.close();
 
     // Main driver part
     if(!link)
