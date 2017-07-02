@@ -7,7 +7,7 @@ image: gcc
 build:
   stage: build
   before_script: 
-    - apt update && apt -y install make autoconf cmake llvm-3.9-dev 
+    - apt update && apt -y install make cmake llvm-3.9-dev 
   script:
     - mkdir build
     - cd build
@@ -24,6 +24,8 @@ build:
 # run tests using the binary built before
 test:
   stage: test
+  before_script: 
+    - apt update && apt -y install make cmake llvm-3.9-dev
   script:
     - cd build
     - make runtests
