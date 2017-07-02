@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(Pasclang VERSION 0.0.1 LANGUAGES CXX)
+project(Pasclang VERSION 1.2 LANGUAGES CXX)
 
 find_package(LLVM REQUIRED CONFIG)
 

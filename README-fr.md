@@ -36,7 +36,7 @@ end.
 
 ## Le compilateur
 
-La version stable actuelle est [Pasclang 1.1](https://gitlab.com/abonnet/pasclang/tree/1.1). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
+La version stable actuelle est [Pasclang 1.2](https://gitlab.com/abonnet/pasclang/tree/1.2). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
 
 Le compilateur agit par étapes successives comme c'est le cas pour la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
 
@@ -148,13 +148,6 @@ L'utilisation en ligne de commande est documentée lorsque Pasclang est exécut�
 ## Support
 
 Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et passe tous les tests sur Debian 9 et Fedora 25. Les compilateurs testés sont habituellement clang >= 4.0.0 avec LLVM >= 4.0.0. Les versions stables sont testées sur une distribution Linux utilisant musl (Alpine Linux) et les systèmes OpenBSD 6.1 et FreeBSD 11.0 (avec clang et LLVM 3.9 pour ces derniers). Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
-
-### Problèmes connus dans la dernière version stable
-
-La dernière révision stable est Pasclang 1.1. Voici une liste de problèmes connus en train d'être résolus pour la prochaine révision.
-
-* Un mauvais usage du compilateur mène parfois à des erreurs de segmentation ou des boucles infinies, par exemple lorsqu'on donne un fichier qui n'existe pas en entrée. Des routines sont en train d'être implémentées pour ces cas de mauvais usage.
-* Les opérateurs logiques ne court-circuitent pas lorsque le résultat est connu avant l'évaluation de tous les termes. Ce comportement est incorrect pour la sémantique opérationnelle de Pseudo-Pascal est et en train d'être corrigé. En attendant, le test correspondant a été désactivé. _Note_: cela est corrigé dans la version de développement et le test a été réactivé.
 
 ## Arborescence des sources
 

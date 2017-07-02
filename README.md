@@ -36,7 +36,7 @@ end.
 
 ## The compiler
 
-The current stable version is [Pasclang 1.1](https://gitlab.com/abonnet/pasclang/tree/1.1). Latest development version can be found in the [master branch](https://gitlab.com/abonnet/pasclang/tree/master).
+The current stable version is [Pasclang 1.2](https://gitlab.com/abonnet/pasclang/tree/1.2). Latest development version can be found in the [master branch](https://gitlab.com/abonnet/pasclang/tree/master).
 
 The compiler operates via successive passes. The first one consists of parsing the input and producing the corresponding syntax tree (lexical and syntactic analyses). The next step is done with the type checker (semantic analysis) before using LLVM to produce the output.
 
@@ -148,13 +148,6 @@ Command-line usage is documented by invoking the pasclang executable (present in
 ## Support
 
 Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 9 and Fedora 25 with stable gcc >= 6.3 and clang >= 4.0.0 as well as LLVM >= 4.0.0. Stable Pasclang versions have also been tested on musl-based distributions (Alpine Linux) as well as OpenBSD 6.1 and FreeBSD 11.0 (using LLVM and clang 3.9 for BSD distributions). Note that you may have to install static development libraries on some systems that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
-
-### Known issues in latest stable release
-
-The latest Pasclang revision is 1.0. Here is a list of currently known problems that are being worked on for the next revision.
-
-* The handling of wrong input isn't fully implemented (e.g. giving an unexisting file as input). Segfaults or hanging might happen in case of wrong usage.
-* Logical operators do not short circuit yet (as opposed to what's specified in Pseudo-Pascal's operational semantics). The corresponding test has been disabled until the proper behavior gets implemented. _Note_: this has been fixed in the latest development version and the test has been re-enabled.
 
 ## Source tree
 
