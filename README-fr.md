@@ -8,7 +8,7 @@ Pasclang est un compilateur pour le langage éducatif Pseudo-Pascal utilisant LL
 
 ## Le langage Pseudo-Pascal
 
-Pseudo-Pascal est un dialecte de Pascal possédant une syntaxe et une sémantique opérationelle similaires mais limitées. Par exemple il ne permet que la compilation de fichiers uniques (une seule unité de translation). Seules quelques fonctions de base sont implantées : `writeln()`, `write()` et `readln()`. Les types supportés sont les entiers et les booléens. Le dossier [test](test/) contient plusieurs examples de programmes utilisant le langage.
+Pseudo-Pascal est un dialecte de Pascal possédant une syntaxe et une sémantique opérationelle similaires mais limitées. Par exemple il ne permet que la compilation de fichiers uniques (une seule unité de traduction). Seules quelques fonctions de base sont implantées : `writeln()`, `write()` et `readln()`. Les types supportés sont les entiers et les booléens. Le dossier [test](test/) contient plusieurs examples de programmes utilisant le langage.
 Pour ceux qui ne connaissent pas du tout Pascal, voici un exemple de programme calculant des termes de la suite de Fibonacci et s'arrêtant lorsque l'on donne 0 :
 
 ```pascal
