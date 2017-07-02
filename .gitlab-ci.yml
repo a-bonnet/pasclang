@@ -9,8 +9,13 @@ build:
   before_script: 
     - apt update && apt -y install make autoconf cmake llvm-3.9-dev 
   script:
-    - cmake .
+    - mkdir build
+    - cd build
+    - cmake ..
     - make
+  artifacts:
+    paths:
+     - build/
   # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
   # cache:
   #   paths:
@@ -20,5 +25,6 @@ build:
 test:
   stage: test
   script:
+    - cd build
     - make runtests
     - make runmoretests
