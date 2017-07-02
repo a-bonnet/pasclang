@@ -1,0 +1,24 @@
+# This file is a template, and might need editing before it works on your project.
+# use the official gcc image, based on debian
+# can use verions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+image: gcc
+
+build:
+  stage: build
+  before_script: 
+    - apt update && apt -y install make autoconf cmake llvm-3.9-dev 
+  script:
+    - cmake .
+    - make
+  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
+  # cache:
+  #   paths:
+  #     - "*.o"
+
+# run tests using the binary built before
+test:
+  stage: test
+  script:
+    - make runtests
+    - make runmoretests
