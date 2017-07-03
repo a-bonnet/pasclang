@@ -38,9 +38,10 @@ llvm::Type* IRGenerator::astToLlvmType(AST::PrimitiveType* type)
     return (pointerType == nullptr ? resultType : pointerType);
 }
 
-// emits LLVM IR for procedure declaration
+// emits LLVM IR for procedure declaration so functions can be called in any order
 llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition)
 {
+    // LLVM functions are declared by giving a vector of argument types, a result type and the procedure name
     std::vector<llvm::Type*> argumentsTypes;
     argumentsTypes.reserve(definition->getFormals().size());
     for(auto& argument : definition->getFormals())
@@ -55,9 +56,11 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition)
         procedureType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context),
             argumentsTypes, false);
 
+    // External linkage is not actually necessary, it can be changed to link against other libraries with no trouble
     llvm::Function* procedure = llvm::Function::Create(procedureType, llvm::Function::ExternalLinkage,
             definition->getName(), this->module.get());
 
+    // Set the name for easier debugging/IR readability
     auto formalsIterator = definition->getFormals().begin();
     for(auto argument = procedure->arg_begin() ; argument != procedure->arg_end() ; argument++)
     {
@@ -71,10 +74,14 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition)
 // emits LLVM IR for global declaration
 llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type)
 {
+    // This will insert since type checking makes sure we have no duplicate
     this->module->getOrInsertGlobal(name, type);
     this->globals[name] = this->module->getNamedGlobal(name);
+
+    // Again, external linkage can be changed
     this->globals[name]->setLinkage(llvm::GlobalVariable::ExternalLinkage);
 
+    // Globals should be initialized in PP, but also because IR will be invalid otherwise
     if(type == llvm::Type::getInt1Ty(this->context))
         this->globals[name]->setInitializer(llvm::ConstantInt::getFalse(this->context));
     else if(type == llvm::Type::getInt32Ty(this->context))
@@ -87,13 +94,15 @@ llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type)
 // emits main body
 llvm::Function* IRGenerator::emitMain(std::unique_ptr<AST::Instruction>& main)
 {
-    std::vector<llvm::Type*> mainArgs; // empty for now
+    std::vector<llvm::Type*> mainArgs; // empty for now, we could use command line arguments for example
+    // void return type means the program's main return value isn't a reliable way to know whether the program terminated correctly
     llvm::FunctionType* mainType = llvm::FunctionType::get(llvm::Type::getVoidTy(this->context), mainArgs, false);
     llvm::Function* mainFunction = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", this->module.get());
 
     llvm::BasicBlock* mainEntry = llvm::BasicBlock::Create(this->context, "entry", mainFunction);
     this->builder.SetInsertPoint(mainEntry);
 
+    // Generation with visitor
     main->accept(*this);
 
     this->builder.CreateRetVoid();
@@ -124,7 +133,7 @@ void IRGenerator::visit(AST::EConstant& constant) { }
 
 void IRGenerator::visit(AST::ECBoolean& boolean)
 {
-    this->lastValue = llvm::ConstantInt::get(llvm::Type::getInt1Ty(this->context), boolean.getValue() ? true : false, "bool");
+    this->lastValue = llvm::ConstantInt::get(llvm::Type::getInt1Ty(this->context), boolean.getValue(), "bool");
 }
 
 void IRGenerator::visit(AST::ECInteger& integer)
@@ -135,6 +144,8 @@ void IRGenerator::visit(AST::ECInteger& integer)
 // access from table of symbols
 void IRGenerator::visit(AST::EVariableAccess& variable)
 {
+    // Since everything is in memory by default and an optimization pass later transforms instructions
+    // to SSA registers when possible, we always use the load instruction
     llvm::Value* value;
     if(this->locals.find(variable.getName()) != this->locals.end())
         this->lastValue = this->builder.CreateLoad(this->locals[variable.getName()], "load");
@@ -148,6 +159,7 @@ void IRGenerator::visit(AST::EUnaryOperation& operation)
 
     switch(operation.getType())
     {
+        // (-b) = (0-b)
         case AST::EUnaryOperation::Type::UnaryMinus:
             this->lastValue = this->builder.CreateSub(llvm::ConstantInt::get(llvm::Type::getInt32Ty(this->context), 0),
                     this->lastValue, "minus");
@@ -205,18 +217,17 @@ void IRGenerator::visit(AST::EBinaryOperation& operation)
                 break;
         }
     }
-
     // Short-circuiting logical operators, the LLVM pseudo code is the following:
     // A or B:
     // result in %c
     // entry:
-    //    %0 alloca i1 result
+    //    %0 = alloca i1 result
     //    store i1 1, %0
     //    %a = i1 evaluate(A)
-    //    br %a end, next
+    //    br %a, end, next
     // next:       ; pred: entry
     //    %b = i1 evaluate(B)
-    //    br %b end, false
+    //    br %b, end, false
     // false:      ; pred: next
     //    store i1 0, %0
     //    br end
@@ -225,9 +236,11 @@ void IRGenerator::visit(AST::EBinaryOperation& operation)
     // and similar for and
     else if(operation.getType() == AST::EBinaryOperation::Type::BinaryLogicalOr)
     {
+        // the two lines after entry:
         llvm::AllocaInst* result = this->builder.CreateAlloca(llvm::Type::getInt1Ty(this->context), nullptr, "or_result");
         this->builder.CreateStore(llvm::ConstantInt::getTrue(this->context), result);
 
+        // evaluate(A)
         operation.getLeft()->accept(*this);
         lhs = this->lastValue;
 
@@ -237,15 +250,19 @@ void IRGenerator::visit(AST::EBinaryOperation& operation)
         llvm::BasicBlock* final = llvm::BasicBlock::Create(this->context, "final");
         llvm::BasicBlock* end = llvm::BasicBlock::Create(this->context, "end");
 
+        // br %a, end, next
         this->builder.CreateCondBr(lhs, end, next);
         this->builder.SetInsertPoint(next);
 
+        // evaluate(B)
         operation.getRight()->accept(*this);
         rhs = this->lastValue;
+        // br %b, end, false
         this->builder.CreateCondBr(rhs, end, final);
         currentFunction->getBasicBlockList().push_back(final);
         this->builder.SetInsertPoint(final);
 
+        // the false block
         this->builder.CreateStore(llvm::ConstantInt::getFalse(this->context), result);
         this->builder.CreateBr(end);
         currentFunction->getBasicBlockList().push_back(end);
@@ -253,6 +270,7 @@ void IRGenerator::visit(AST::EBinaryOperation& operation)
 
         this->lastValue = this->builder.CreateLoad(result, "logicalor");
     }
+    // See BinaryLogicalOr for similar description
     else if(operation.getType() == AST::EBinaryOperation::Type::BinaryLogicalAnd)
     {
         llvm::AllocaInst* result = this->builder.CreateAlloca(llvm::Type::getInt1Ty(this->context), nullptr, "end_result");
@@ -289,6 +307,7 @@ void IRGenerator::visit(AST::EFunctionCall& call)
 {
     llvm::Function *callee = this->module->getFunction(call.getName());
 
+    // Calls function by evaluating arguments (the so-called actuals) from left to right
     std::vector<llvm::Value*> arguments;
     for(auto& argument : call.getActuals())
     {
@@ -302,13 +321,16 @@ void IRGenerator::visit(AST::EFunctionCall& call)
 void IRGenerator::visit(AST::EArrayAccess& access)
 {
     access.getArray()->accept(*this);
+    // We first need to know the array's address
     llvm::Value* array = this->lastValue;
 
-    // we use a single-index GEP since every memory block is dynamically allocated
+    // we use a single-index GEP since every memory block is dynamically allocated,
+    // this is the offset from the array's start for the array's type
     std::vector<llvm::Value*> gepIndex(1);
     access.getIndex()->accept(*this);
     gepIndex[0] = this->lastValue;;
 
+    // GEP only computes the address, we still need to load the value from the address
     this->lastValue = this->builder.CreateGEP(array, gepIndex, "gep");
     this->lastValue = this->builder.CreateLoad(this->lastValue, "loadptr");
 }
@@ -316,7 +338,7 @@ void IRGenerator::visit(AST::EArrayAccess& access)
 // calls the runtime's allocation function
 void IRGenerator::visit(AST::EArrayAllocation& allocation)
 {
-    // Allocation types are the following: (manually done since it'Àkls extern "C"'d)
+    // Allocation types are the following: (manually done since it's extern "C"'d)
     //  1 is for booleans
     //  2 is for integers
     //  3 is for pointers (aka multidimensional arrays)
@@ -339,15 +361,17 @@ void IRGenerator::visit(AST::IProcedureCall& call)
 {
     llvm::Function *callee = this->module->getFunction(call.getName());
     std::vector<llvm::Value*> arguments;
+    // Like in functions, we evaluate arguments from left to right
     for(auto& argument : call.getActuals())
     {
         argument->accept(*this);
         arguments.push_back(this->lastValue);
     }
-    this->lastValue = this->builder.CreateCall(callee, arguments);
+    // Note procedures don't actually return a value so affectation would be dead code
+    this->builder.CreateCall(callee, arguments);
 }
 
-// stores and makes sure value is properly casted for IR correctness
+// stores and makes sure value is properly cast for IR correctness
 void IRGenerator::visit(AST::IVariableAssignment& assignment)
 {
     llvm::Value* lhs;
@@ -362,12 +386,14 @@ void IRGenerator::visit(AST::IVariableAssignment& assignment)
 
     lhs = this->lastValue;
 
+    // This gives a type to the bytes loaded from address
     rhs = this->builder.CreateBitCast(rhs, static_cast<llvm::PointerType*>(lhs->getType())->getElementType(), "bitcast");
     this->lastValue = this->builder.CreateStore(rhs, lhs);
 }
 
 void IRGenerator::visit(AST::IArrayAssignment& assignment)
 {
+    // This is similar to array access to know the address
     assignment.getValue()->accept(*this);
     llvm::Value* value = this->lastValue;
 
@@ -380,20 +406,24 @@ void IRGenerator::visit(AST::IArrayAssignment& assignment)
     this->lastValue = this->builder.CreateGEP(array, gepIndex, "gep");
     value = this->builder.CreateBitCast(value, static_cast<llvm::PointerType*>(array->getType())->getElementType(), "arraybitcast");
 
+    // we just happen to add the storing of rhs
     this->lastValue = this->builder.CreateStore(value, this->lastValue);
 }
 
 void IRGenerator::visit(AST::ISequence& sequence)
 {
+    // Each instruction is executed from first to last
     for(auto& instruction : sequence.getInstructions())
         instruction->accept(*this);
 }
 
 void IRGenerator::visit(AST::ICondition& condition)
 {
+    // First we need to evaluate the condition to know which branch is taken
     condition.getCondition()->accept(*this);
     llvm::Value* conditionValue = this->lastValue;
 
+    // Conditions are supposed to be booleans, we compare the result to false
     conditionValue = this->builder.CreateICmpNE(conditionValue, llvm::ConstantInt::getFalse(this->context), "test");
 
     llvm::Function* currentFunction = this->builder.GetInsertBlock()->getParent();
@@ -402,6 +432,7 @@ void IRGenerator::visit(AST::ICondition& condition)
     llvm::BasicBlock* branchFalse = llvm::BasicBlock::Create(this->context, "false");
     llvm::BasicBlock* branchMerge = llvm::BasicBlock::Create(this->context, "merge");
 
+    // Jump to the correct branch
     this->builder.CreateCondBr(conditionValue, branchTrue, branchFalse);
     this->builder.SetInsertPoint(branchTrue);
 
@@ -409,28 +440,32 @@ void IRGenerator::visit(AST::ICondition& condition)
     this->builder.CreateBr(branchMerge);
     branchTrue = this->builder.GetInsertBlock();
 
+    // Don't forget the false basic block hasn't yet been attached to a function, we do this now
     currentFunction->getBasicBlockList().push_back(branchFalse);
     this->builder.SetInsertPoint(branchFalse);
 
-    // note: if you don't check condition this will build but emit invalid IR and segfault
+    // note: if you don't check condition this will build but emit invalid IR and segfault,
+    // worst case here is it gives a dead code branch which easily gets eaten by optimizers
     if(condition.getFalse().get() != nullptr)
         condition.getFalse()->accept(*this);
 
     this->builder.CreateBr(branchMerge);
     branchFalse = this->builder.GetInsertBlock();
 
+    // Like with the false basic block, we need to attach the merge block
     currentFunction->getBasicBlockList().push_back(branchMerge);
     this->builder.SetInsertPoint(branchMerge);
 }
 
 void IRGenerator::visit(AST::IRepetition& repetition)
 {
+    // First we evaluate the condition
     repetition.getCondition()->accept(*this);
     llvm::Value* conditionValue = this->lastValue;
     conditionValue = this->builder.CreateICmpNE(conditionValue, llvm::ConstantInt::getFalse(this->context), "test");
 
     llvm::Function* currentFunction = this->builder.GetInsertBlock()->getParent();
-    llvm::BasicBlock* before = this->builder.GetInsertBlock();
+    // create two blocks, one for the loop's content and the other one to jump out of the loop when condition gets false
     llvm::BasicBlock* loop = llvm::BasicBlock::Create(this->context, "loop", currentFunction);
     llvm::BasicBlock* end = llvm::BasicBlock::Create(this->context, "end", currentFunction);
 
@@ -439,46 +474,46 @@ void IRGenerator::visit(AST::IRepetition& repetition)
 
     repetition.getInstructions()->accept(*this);
 
+    // Need to check condition again at the end of block to know whether we're looping or breaking
     repetition.getCondition()->accept(*this);
     conditionValue = this->builder.CreateICmpNE(this->lastValue, llvm::ConstantInt::getFalse(this->context), "while");
     this->builder.CreateCondBr(conditionValue, loop, end);
 
+    // bye
     this->builder.SetInsertPoint(end);
 }
 
 void IRGenerator::visit(AST::Procedure& definition)
 {
+    // The procedures are already declared, this is necessary so we can call procedures declared later
+    // a consequence is we don't need to specify the prototype again
     this->locals.clear();
     llvm::Function* procedure = this->module->getFunction(definition.getName());
-
-    auto formalsIterator = definition.getFormals().begin();
-    for(auto argument = procedure->arg_begin() ; argument != procedure->arg_end() ; argument++)
-    {
-        argument->setName(formalsIterator->first);
-        formalsIterator++;
-    }
 
     llvm::BasicBlock* entry = llvm::BasicBlock::Create(this->context, "entry", procedure);
     this->builder.SetInsertPoint(entry);
 
+    // We set formals in memory again, this might look expensive but SSA optimizations will change it if it's not needed.
     for(auto formal = procedure->arg_begin() ; formal != procedure->arg_end() ; formal++)
     {
         this->locals[formal->getName()] = this->builder.CreateAlloca(formal->getType(), nullptr, formal->getName());
         this->builder.CreateStore(&*formal, this->locals[formal->getName()], "storeformal");
     }
 
+    // The function's return value is the variable bound to its name
     if(definition.getResultType().get() != nullptr)
     {
         this->locals[definition.getName()] =
             this->builder.CreateAlloca(this->astToLlvmType(definition.getResultType().get()), nullptr, definition.getName());
     }
 
+    // Local variables are stored on the stack too
     for(auto& local : definition.getLocals())
     {
         this->locals[local.first] = this->builder.CreateAlloca(this->astToLlvmType(local.second.get()),
                 nullptr, local.first);
 
-        // Pseudo-Pascal semantics give default value to local variables too
+        // Pseudo-Pascal semantics give default value to local variables, we proceed like we did for globals
         llvm::Value* defaultValue;
         if(local.second.get()->getType()->dimension > 0)
             defaultValue = llvm::ConstantPointerNull::get(static_cast<llvm::PointerType*>(this->astToLlvmType(local.second.get())));

@@ -132,7 +132,7 @@ std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::l
     return bindings;
 }
 
-// formals = [formal [{COMMA formal}]]
+// formals = [formal {COMMA formal}]
 // formal = declaration
 std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>> Parser::formalsDeclarations()
 {
@@ -376,7 +376,8 @@ std::unique_ptr<AST::Instruction> Parser::variableAssignment()
     return result;
 }
 
-// arrayassignment = (variableaccess | arrayaccess) ASSIGN expression
+// arrayassignment = arrayaccess ASSIGN expression
+// We reuse the postfix node so we have to cast the parsed expression
 std::unique_ptr<AST::Instruction> Parser::arrayAssignment()
 {
     Position start = this->peek().getLocation().getStart();

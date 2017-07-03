@@ -9,6 +9,7 @@
 
 namespace pasclang::Semantic {
 
+// Various error and warning reporting routines
 void TypeChecker::wrongType(const TOT::Type* type, const TOT::Type* expected, const Parsing::Position* start, const Parsing::Position* end)
 {
     std::string message = "unexpected type ";
@@ -127,7 +128,6 @@ void TypeChecker::visit(AST::EConstant&) { }
 
 void TypeChecker::visit(AST::ECBoolean&)
 {
-    std::unique_ptr<Parsing::Location> location;
     this->lastType = booleanType;
 }
 
@@ -298,8 +298,7 @@ void TypeChecker::visit(AST::EFunctionCall& call)
     this->lastType = procedure->get()->getResultType()->getType();
 }
 
-// checkes index for int type and returns accessed address type
-// returns
+// checkes index for int type and returns the value at accessed address' type
 void TypeChecker::visit(AST::EArrayAccess& access)
 {
     access.getIndex()->accept(*this);

@@ -4,7 +4,7 @@
 
 ## Le projet
 
-Pasclang est un compilateur pour le langage éducatif Pseudo-Pascal utilisant LLVM pour générer le code machine. L'ambition est de fournir un exemple d'implémentation d'un simple langage impératif utilisant CMake et LLVM et évitant autant que possible l'usage de bibliothèques extérieures.
+Pasclang est un compilateur pour le langage éducatif Pseudo-Pascal utilisant LLVM pour générer le code machine. L'ambition est de fournir un exemple d'implantation d'un simple langage impératif utilisant CMake et LLVM et évitant autant que possible l'usage de bibliothèques extérieures.
 
 ## Le langage Pseudo-Pascal
 
@@ -38,9 +38,9 @@ end.
 
 La version stable actuelle est [Pasclang 1.2](https://gitlab.com/abonnet/pasclang/tree/1.2). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
 
-Le compilateur agit par étapes successives comme c'est le cas pour la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
+Le compilateur agit par étapes successives comme c'est le cas de la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
 
-Un des objectifs principaux est de fournir des diagnostiques utiles, par exemple voici un programme syntaxiquement incorrect et ses diagnostiques :
+Un des objectifs principaux est de fournir des diagnostiques utiles, voici par exemple un programme syntaxiquement incorrect et ses diagnostiques :
 ```pascal
 $ cat syntax.pp 
 program
@@ -130,7 +130,7 @@ error: at line 10
 ## Compiler
 
 Pasclang utilise [CMake](https://cmake.org) comme système de compilation car c'est également celui requis pour LLVM.
-Afin de compiler Pasclang, il est nécessaire d'installer [LLVM](http://llvm.org/docs/CMake.html) en le compilant ou le téléchargeant. Il faut ensuite s'assurer que LLVM est visible par CMake, ce qui est habituellement le cas lorsqu'installé dans l'arborescence classique `/usr/...` ou dans le répertoire ciblé par la variable d'environnement `LLVM_DIR`. Ensuite les commandes sont très simples, par exemple depuis le répertoire racine :
+Afin de compiler Pasclang, il est nécessaire d'installer [LLVM](http://llvm.org/docs/CMake.html) en le compilant ou le téléchargeant. Il faut ensuite s'assurer que LLVM est visible par CMake, ce qui est habituellement le cas lorsqu'installé dans l'arborescence classique `/usr/...` ou dans le répertoire ciblé par la variable d'environnement `LLVM_DIR`. Ensuite les commandes sont très simples, par exemple depuis le dossier racine :
 
 ```bash
 mkdir build
@@ -143,11 +143,11 @@ Vous pouvez ensuite exécuter les tests en tapant `make runtests` et `make runmo
 
 ## Usage
 
-L'utilisation en ligne de commande est documentée lorsque Pasclang est exécuté sans argument (l'exécutable est présent par défaut dans le dossier `bin/` du répertoire de compilation).
+L'aide à l'utilisation en ligne de commande de Pasclang est donnée lorsque le programme est exécuté sans argument (l'exécutable est présent par défaut dans le dossier `bin/` du répertoire de compilation).
 
 ## Support
 
-Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et passe tous les tests sur Debian 9 et Fedora 25. Les compilateurs testés sont habituellement clang >= 4.0.0 avec LLVM >= 4.0.0. Les versions stables sont testées sur une distribution Linux utilisant musl (Alpine Linux) et les systèmes OpenBSD 6.1 et FreeBSD 11.0 (avec clang et LLVM 3.9 pour ces derniers). Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
+Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 9 et Fedora 25. Les compilateurs testés sont habituellement clang >= 4.0.0 avec LLVM >= 4.0.0. Les versions stables sont testées sur une distribution Linux utilisant musl (Alpine Linux) et les systèmes OpenBSD 6.1 et FreeBSD 11.0 (avec clang et LLVM 3.9 pour ces derniers). Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
 
 ## Arborescence des sources
 
@@ -161,7 +161,7 @@ Ce répertoire contient la plupart des fonctions et autres données se trouvant 
 
 ### [rt](rt/)
 
-La bibliothèque `rt` contient les routines nécessaires par les programmes Pseudo-Pascal pour s'exécuter correctement, c'est à dire les fonctions d'entrée-sortie et de gestion de la mémoire. S'y trouvera également le ramasseur de miettes une fois celui-ci implanté.
+La bibliothèque `rt` contient les routines C utilisées par les programmes Pseudo-Pascal, c'est à dire les fonctions d'entrée-sortie et de gestion de la mémoire. S'y trouvera également le ramasseur de miettes une fois celui-ci implanté. Un léger désavantage est qu'actuellement, Pasclang lie les exécutables statiquement par soucis de simplicité, ce qui signie que les programmes générés seront relativement gros et qu'on ne peut utiliser de nom entrant en collision avec certains de la bibliothèque standard C. Cela peut être contourné en liant dynamiquement les exécutables et s'assurant que la bibliothèque partagée `libpasclang-rt.so` peut être trouvée par le système à l'exécution des programmes Pseudo-Pascal, généralement en ajustant la variable d'environnement `LD_LIBRARY_PATH`.
 
 ### [test](test/)
 
