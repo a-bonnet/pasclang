@@ -10,6 +10,8 @@ set(
     LLVMBackend/IRGenerator.cpp
     LLVMBackend/IROptimizer.cpp
     LLVMBackend/ObjectGenerator.cpp
+
+    UST/Untyper.cpp
 )
 
 add_executable(
