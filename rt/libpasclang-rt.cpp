@@ -2,7 +2,25 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-extern "C" void* pasclang_alloc(int32_t size, unsigned char type)
+// TODO: recover stack map with LLVM, implement GC routines
+
+static size_t __pasclang_heap_size;
+static uint32_t __pasclang_gc_alloc_ptr;
+static void* __pasclang_gc_from_space;
+static void* __pasclang_gc_to_space;
+static uint32_t __pasclang_gc_scan_ptr;
+
+struct __pasclang_object {
+    char flags;
+    size_t size;
+    void* object;
+};
+
+// Sets the GC up. Must be called at the beginning of every Pseudo-Pascal program.
+extern "C" void __pasclang_gc_initialize(int32_t size);
+
+// Allocates a GCed object. Return address is the data used by the program, not the structure.
+extern "C" void* __pasclang_gc_alloc(int32_t size, unsigned char type)
 {
     switch(type)
     {
@@ -16,6 +34,12 @@ extern "C" void* pasclang_alloc(int32_t size, unsigned char type)
             return NULL;
     }
 }
+
+// Triggers tri-color Cheney collection
+extern "C" void __pasclang_gc_collect();
+
+// Copies object to the unused semi-space
+extern "C" __pasclang_object* __pasclang_gc_copy(__pasclang_object* object);
 
 extern "C" int readln()
 {

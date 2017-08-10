@@ -352,7 +352,7 @@ void IRGenerator::visit(AST::EArrayAllocation& allocation)
         arguments[1] = llvm::ConstantInt::get(llvm::Type::getInt8Ty(this->context), 2);
     else
         arguments[1] = llvm::ConstantInt::get(llvm::Type::getInt8Ty(this->context), 1);
-    this->lastValue = this->builder.CreateCall(this->module->getFunction("pasclang_alloc"), arguments, "alloc");
+    this->lastValue = this->builder.CreateCall(this->module->getFunction("__pasclang_gc_alloc"), arguments, "alloc");
 }
 
 void IRGenerator::visit(AST::Instruction& instruction) { }
@@ -549,7 +549,7 @@ void IRGenerator::visit(AST::Program& program)
     allocArguments[0] = llvm::Type::getInt32Ty(this->context);
     allocArguments[1] = llvm::Type::getInt8Ty(this->context);
     llvm::FunctionType* allocType = llvm::FunctionType::get(llvm::Type::getInt8PtrTy(this->context), allocArguments, false);
-    llvm::Function::Create(allocType, llvm::Function::ExternalLinkage, "pasclang_alloc", this->module.get());
+    llvm::Function::Create(allocType, llvm::Function::ExternalLinkage, "__pasclang_gc_alloc", this->module.get());
     // readln
     llvm::FunctionType* readlnType = llvm::FunctionType::get(llvm::Type::getInt32Ty(this->context), false);
     llvm::Function::Create(readlnType, llvm::Function::ExternalLinkage, "readln", this->module.get());

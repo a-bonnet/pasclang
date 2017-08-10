@@ -106,6 +106,7 @@ void PPPrinter::visit(EBinaryOperation& operation)
             break;
         case EBinaryOperation::Type::BinaryLogicalOr:
             this->buffer += " or ";
+            break;
         case EBinaryOperation::Type::BinaryLogicalAnd:
             this->buffer += " and ";
             break;
