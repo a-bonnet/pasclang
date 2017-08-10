@@ -1,6 +1,7 @@
 # [The Pasclang Pseudo-Pascal compiler](https://gitlab.com/abonnet/pasclang/)
 
 [Version Française/French version](README-fr.md)
+[Website](http://arnaud.medichon.fr/pasclang.html)
 
 ## The project
 
@@ -8,8 +9,8 @@ Pasclang is a compiler for the educational language Pseudo-Pascal. It uses the L
 
 ## The Pseudo-Pascal language
 
-Pseudo-Pascal is a Pascal dialect which features similar syntax and semantics but has several limitations. For example, only single-file programs can be compiled. The supported types are integers and booleans and only three built-in functions exist: `readln()` which reads an integer from the standard input as well as `write(x)` and `writeln(x)` where `x` is an integer printer to the standard output with or with no new line. The [test directory](test/) features several examples of programs written in Pseudo-Pascal. More examples will be added as features get implemented.
-For those who are not familiar with the language, here is a sample program that computes the given Fibonacci number until 0 is given:
+Pseudo-Pascal is a Pascal dialect which features similar syntax and semantics but has several limitations. For example, only single-file programs can be compiled. The supported types are integers and booleans. Only three built-in functions exist: `readln()` which reads an integer from the standard input, `write(x)` and `writeln(x)` where `x` is an integer printed to the standard output (with or with no new line). The [test directory](test/) features several examples of programs written in Pseudo-Pascal. More examples will be added as features get implemented.
+For those who are not familiar with the language, here is a sample program that computes the given Fibonacci number until we input 0:
 
 ```pascal
 program
