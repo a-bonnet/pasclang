@@ -3,7 +3,7 @@ image: gcc
 build:
   stage: build
   before_script: 
-    - apt update && apt -y install make cmake llvm-3.9-dev
+    - apt update && apt -y install make cmake llvm-5.0-dev
   script:
     - mkdir build
     - cd build
@@ -16,7 +16,7 @@ build:
 test:
   stage: test
   before_script: 
-    - apt update && apt -y install make cmake llvm-3.9-dev
+    - apt update && apt -y install make cmake llvm-5.0-dev
   script:
     - cd build
     - make runtests
