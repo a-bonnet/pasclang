@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
             ir.generate(ast);
             LLVMBackend::IROptimizer opt(optimizationLevel, ir.getModule(), reporter.get());
             if(dump)
-                ir.getModule()->dump();
+                ir.getModule()->print(llvm::errs(), nullptr);
             LLVMBackend::ObjectGenerator obj(assembly, outputFile, ir.getModule(), reporter.get());
             if(link)
             {

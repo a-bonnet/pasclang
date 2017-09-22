@@ -124,7 +124,7 @@ void IRGenerator::generate(std::unique_ptr<AST::Program>& program)
 // dumps LLVM IR assembly to stderr
 void IRGenerator::dumpModule()
 {
-    this->module->dump();
+    this->module->print(llvm::errs(), nullptr);
 }
 
 void IRGenerator::visit(AST::PrimitiveType&) { }
