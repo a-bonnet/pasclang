@@ -20,6 +20,9 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/GlobalVariable.h>
 
+// print() method
+#include <llvm/Support/raw_ostream.h>
+
 #include <iostream>
 
 namespace pasclang::LLVMBackend {

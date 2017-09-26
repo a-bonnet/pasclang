@@ -3,7 +3,10 @@ image: gcc
 build:
   stage: build
   before_script: 
-    - apt update && apt -y install make cmake llvm-3.9-dev
+    - echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-5.0 main" >> /etc/apt/sources.list
+    - echo "deb-src http://apt.llvm.org/stretch/ llvm-toolchain-stretch-5.0 main" >> /etc/apt/sources.list
+    - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+    - apt update && apt -y install make cmake git wget llvm-5.0-dev
   script:
     - mkdir build
     - cd build
@@ -16,7 +19,10 @@ build:
 test:
   stage: test
   before_script: 
-    - apt update && apt -y install make cmake llvm-3.9-dev
+    - echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-5.0 main" >> /etc/apt/sources.list
+    - echo "deb-src http://apt.llvm.org/stretch/ llvm-toolchain-stretch-5.0 main" >> /etc/apt/sources.list
+    - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+    - apt update && apt -y install make cmake git wget llvm-5.0-dev
   script:
     - cd build
     - make runtests
