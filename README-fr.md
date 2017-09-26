@@ -149,7 +149,7 @@ L'aide à l'utilisation en ligne de commande de Pasclang est donnée lorsque le 
 
 ## Support
 
-Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 9 et Fedora 25. Les compilateurs testés sont habituellement clang >= 4.0.0 avec LLVM >= 4.0.0. Les versions stables sont testées sur une distribution Linux utilisant musl (Alpine Linux) et les systèmes OpenBSD 6.1 et FreeBSD 11.0 (avec clang et LLVM 3.9 pour ces derniers). Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
+Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 10. Les compilateurs testés sont habituellement clang >= 4.0.0 avec LLVM >= 4.0.0. Les versions stables sont testées sur une distribution Linux utilisant musl (Alpine Linux) et les systèmes OpenBSD 6.1 et FreeBSD 11.0 (avec clang et LLVM 3.9 pour ces derniers). Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
 
 ## Arborescence des sources
 

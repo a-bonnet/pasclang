@@ -6,7 +6,7 @@ find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-SET(CMAKE_CXX_FLAGS "-std=c++1z -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_CXX_FLAGS "-std=c++17 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable ${CMAKE_CXX_FLAGS}")
 
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
