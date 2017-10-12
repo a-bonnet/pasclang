@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <algorithm>
-
+#include <sstream>
 #include <memory>
 
 #include "Pasclang.h"
@@ -12,64 +12,79 @@ namespace pasclang::Semantic {
 // Various error and warning reporting routines
 void TypeChecker::wrongType(const TOT::Type* type, const TOT::Type* expected, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string message = "unexpected type ";
-    message += (type->kind == TOT::TypeKind::Boolean ? "bool" : "int");
-    message += "["; message += std::to_string(type->dimension); message += "] ";
-    message += "instead of "; message += (expected->kind == TOT::TypeKind::Boolean ? "bool" : "int");
-    message += "["; message += std::to_string(expected->dimension); message += "] ";
-    this->reporter->message(Message::MessageType::Error, message, start, end);
+    std::ostringstream message;
+    std::string lhs = type->kind == TOT::TypeKind::Boolean ? "bool" : "int";
+    std::string rhs = expected->kind == TOT::TypeKind::Boolean ? "bool" : "int";
+    message << "unexpected type " << lhs << "[" << type->dimension  << "] instead of " << rhs << "[" << expected->dimension << "]";
+
+    this->reporter->message(Message::MessageType::Error, message.str(), start, end);
     this->errorHappened = true;
 }
 
 void TypeChecker::invalidCall(std::string& name, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string message = "invalid call to procedure or function " + name;
-    this->reporter->message(Message::MessageType::Error, message, start, end);
+    std::ostringstream message;
+    message << "invalid call to procedure or function " << name;
+
+    this->reporter->message(Message::MessageType::Error, message.str(), start, end);
     this->errorHappened = true;
 }
 
 void TypeChecker::invalidArity(std::string& name, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string message = "wrong number of arguments in call to " + name;
-    this->reporter->message(Message::MessageType::Error, message, start, end);
+    std::ostringstream message;
+    message << "wrong number of arguments in call to " << name;
+
+    this->reporter->message(Message::MessageType::Error, message.str(), start, end);
     this->errorHappened = true;
 }
 
 void TypeChecker::undefinedSymbol(const std::string& symbol, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string message = "undefined symbol " + symbol;
-    this->reporter->message(Message::MessageType::Error, message, start, end);
+    std::ostringstream message;
+    message << "undefined symbol " << symbol;
+    
+    this->reporter->message(Message::MessageType::Error, message.str(), start, end);
     this->errorHappened = true;
 }
 
 void TypeChecker::redefiningSymbol(const std::string& symbol, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string message = "redefinition of symbol " + symbol;
-    this->reporter->message(Message::MessageType::Error, message, start, end);
+    std::ostringstream message;
+    message << "redefinition of symbol " << symbol;
+    
+    this->reporter->message(Message::MessageType::Error, message.str(), start, end);
     this->errorHappened = true;
 }
 
 void TypeChecker::invalidAssignment(const TOT::Type* type, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string message = "invalid assignment to type ";
-    message += message += (type->kind == TOT::TypeKind::Boolean ? "bool" : "int");
-    message += "["; message += std::to_string(type->dimension); message += "] ";
-    this->reporter->message(Message::MessageType::Error, message, start, end);
+    std::ostringstream message;
+    std::string op = type->kind == TOT::TypeKind::Boolean ? "bool" : "int";
+    message << "invalid assignment to type " << op << "[" << type->dimension << "]";
+
+    this->reporter->message(Message::MessageType::Error, message.str(), start, end);
     this->errorHappened = true;
 }
 
 void TypeChecker::uninitializedValue(const std::string& symbol, const std::string& function,
         const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string warningMessage = "using unitialized variable " + symbol + (function != "" ? " in function " + function : "");
-    this->reporter->message(Message::MessageType::Warning, warningMessage, start, end);
+    std::ostringstream message;
+    std::string name = function != "" ? " in function " + function : "";
+    message << "using unitialized variable " << symbol 
+        << (function != "" ? " in function " + function : "");
+
+    this->reporter->message(Message::MessageType::Warning, message.str(), start, end);
 }
 
 void TypeChecker::unusedValue(const std::string& symbol, const std::string& function,
         const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string warningMessage = "unused variable " + symbol + (function != "" ? " in function " + function : "");
-    this->reporter->message(Message::MessageType::Warning, warningMessage, start, end);
+    std::ostringstream message;
+    message << "unused variable " << symbol << (function != "" ? " in function " + function : "");
+
+    this->reporter->message(Message::MessageType::Warning, message.str(), start, end);
 }
 
 void TypeChecker::readDeclaration(AST::Procedure* definition)
@@ -298,7 +313,7 @@ void TypeChecker::visit(AST::EFunctionCall& call)
     this->lastType = procedure->get()->getResultType()->getType();
 }
 
-// checkes index for int type and returns the value at accessed address' type
+// checks index for int type and returns the value at accessed address' type
 void TypeChecker::visit(AST::EArrayAccess& access)
 {
     access.getIndex()->accept(*this);
@@ -548,7 +563,7 @@ void TypeChecker::visit(AST::Program& program)
                     &global.second->getLocation()->getEnd());
     }
 
-    // Checking declarations comes first since functions might call eachother recursively
+    // Checking declarations comes first since functions might call each other recursively
     for(const auto& procedure : program.getProcedures())
         this->readDeclaration(procedure.get());
 

@@ -8,8 +8,8 @@
 #include "LLVMBackend/ObjectGenerator.h"
 #include <memory>
 #include <iostream>
+#include <sstream>
 
-// temporary until safe linker call is implemented
 #include <cstdlib>
 //#include <lld/Driver/Driver.h>
 
@@ -156,10 +156,11 @@ int main(int argc, char* argv[])
             {
 #warning Placeholder until some fork/execlp method (and equivalent on non-Unix) is used instead
                 // The defines are provided by CMake
-                std::string systemArg = PASCLANG_LINKER_DRIVER;
-                systemArg += " -static " + outputFile + " -lpasclang-rt -L " + PASCLANG_RT_BUILD_PATH " -L " + PASCLANG_RT_INSTALL_PATH;
-                systemArg += " -o " + outputExec;
-                std::system(systemArg.c_str());
+                std::ostringstream systemArg;
+                systemArg << PASCLANG_LINKER_DRIVER << " -static " << outputFile << " -lpasclang-rt -L "
+                    << PASCLANG_RT_BUILD_PATH << " -L " << PASCLANG_RT_INSTALL_PATH
+                    << " -o " << outputExec;
+                std::system(systemArg.str().c_str());
             }
         }
     }

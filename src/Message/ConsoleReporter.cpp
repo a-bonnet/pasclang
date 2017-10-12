@@ -1,80 +1,83 @@
 #include "Message/ConsoleReporter.h"
 #include <iostream>
+#include <sstream>
 
 namespace pasclang::Message {
 
 void ConsoleReporter::note(std::string message, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string output = "note: ";
+    std::ostringstream output;
+    output << "note: ";
     if(start != nullptr)
     {
         if(end != nullptr)
         {
             if(start->getLine() == end->getLine())
-                output += "at line " + std::to_string(start->getLine());
+                output << "at line " << start->getLine();
             else
-                output += "starting from line " + std::to_string(start->getLine());
+                output << "starting from line " << start->getLine();
         }
         else
-            output += "starting from line " + std::to_string(start->getLine());
+            output << "starting from line " << start->getLine();
     }
     else if(end != nullptr)
-        output += "up to line " + std::to_string(end->getLine());
+        output << "up to line " << end->getLine();
 
-    output += "\n\t" + message + "\n";
+    output << "\n\t" << message << "\n";
     // print line(s) here
-    output += "\n";
+    output << "\n";
 
-    std::cout << output;
+    std::cout << output.str() << std::endl;
 }
 
 void ConsoleReporter::warning(std::string message, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string output = "warning: ";
+    std::ostringstream output;
+    output << "warning: ";
     if(start != nullptr)
     {
         if(end != nullptr)
         {
             if(start->getLine() == end->getLine())
-                output += "at line " + std::to_string(start->getLine());
+                output << "at line " << start->getLine();
             else
-                output += "starting from line " + std::to_string(start->getLine());
+                output << "starting from line " << start->getLine();
         }
         else
-            output += "starting from line " + std::to_string(start->getLine());
+            output << "starting from line " << start->getLine();
     }
     else if(end != nullptr)
-        output += "up to line " + std::to_string(end->getLine());
+        output << "up to line " << end->getLine();
 
-    output += "\n\t" + message + "\n";
+    output << "\n\t" << message << "\n";
     // print line(s) here
-    output += "\n";
+    output << "\n";
 
-    std::cout << output;
+    std::cout << output.str() << std::endl;
 }
 
 void ConsoleReporter::error(std::string message, const Parsing::Position* start, const Parsing::Position* end)
 {
-    std::string output = "error: ";
+    std::ostringstream output;
+    output << "error: ";
     if(start != nullptr)
     {
         if(end != nullptr)
         {
             if(start->getLine() == end->getLine())
-                output += "at line " + std::to_string(start->getLine());
+                output << "at line " << start->getLine();
             else
-                output += "from line " + std::to_string(start->getLine());
+                output << "from line " << start->getLine();
         }
         else
-            output += "from line " + std::to_string(start->getLine());
+            output << "from line " << start->getLine();
     }
     else if(end != nullptr)
-        output += "to line " + std::to_string(end->getLine());
+        output << "to line " << end->getLine();
 
-    output += "\n\t" + message + "\n";
+    output << "\n\t" << message << "\n";
 
     std::fstream file;
-    std::string buffer;
     file.open(this->getFileName(), file.in);
     char currentChar = 0;
 
@@ -85,7 +88,7 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
 
         do {
             currentChar = file.get();
-            buffer += currentChar;
+            output << currentChar;
         } while(currentChar != '\n' && currentChar != EOF);
 
         file.seekg(start->getOffset(), file.beg);
@@ -96,19 +99,19 @@ void ConsoleReporter::error(std::string message, const Parsing::Position* start,
         }
 
         for(int i = 0 ; i < start->getOffset() - start->getBeginningOfLine() ; i++)
-            buffer += ' ';
-        buffer += '^';
+            output << ' ';
+        output << '^';
 
         if(end != nullptr && end->getLine() == start->getLine())
         {
             for(int i = 0 ; i < end->getOffset() - start->getOffset() ; i++)
-                buffer += '^';
+                output << '^';
         }
 
         file.close();
     }
 
-    std::cout << output << '\n' << buffer << std::endl;
+    std::cout << output.str() << std::endl;
 }
 
 void ConsoleReporter::message(MessageType type, std::string message, const Parsing::Position* start, const Parsing::Position* end)

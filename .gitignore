@@ -3,4 +3,5 @@ html/
 latex/
 .ycm_extra_conf.py
 *.[oa]
+*.swp
 

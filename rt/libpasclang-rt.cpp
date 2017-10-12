@@ -16,11 +16,13 @@ struct __pasclang_object {
     void* object;
 };
 
+extern "C" {
+
 // Sets the GC up. Must be called at the beginning of every Pseudo-Pascal program.
-extern "C" void __pasclang_gc_initialize(int32_t size);
+void __pasclang_gc_initialize(int32_t size);
 
 // Allocates a GCed object. Return address is the data used by the program, not the structure.
-extern "C" void* __pasclang_gc_alloc(int32_t size, unsigned char type)
+void* __pasclang_gc_alloc(int32_t size, unsigned char type)
 {
     switch(type)
     {
@@ -36,25 +38,27 @@ extern "C" void* __pasclang_gc_alloc(int32_t size, unsigned char type)
 }
 
 // Triggers tri-color Cheney collection
-extern "C" void __pasclang_gc_collect();
+void __pasclang_gc_collect();
 
 // Copies object to the unused semi-space
-extern "C" __pasclang_object* __pasclang_gc_copy(__pasclang_object* object);
+__pasclang_object* __pasclang_gc_copy(__pasclang_object* object);
 
-extern "C" int readln()
+int readln()
 {
     int input;
     scanf("%d", &input);
     return input;
 }
 
-extern "C" void write(int output)
+void write(int output)
 {
     printf("%d", output);
 }
 
-extern "C" void writeln(int output)
+void writeln(int output)
 {
     printf("%d\n", output);
 }
+
+} // extern "C"
 

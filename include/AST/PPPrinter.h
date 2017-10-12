@@ -5,6 +5,7 @@
 
 #include "AST/AST.h"
 #include <iostream>
+#include <sstream>
 
 namespace pasclang::AST {
 
@@ -12,7 +13,7 @@ class PPPrinter : public Visitor
 {
     private:
         size_t indentation = 0;
-        std::string buffer = "";
+        std::ostringstream buffer;
 
     public:
         PPPrinter() { }
