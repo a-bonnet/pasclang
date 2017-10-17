@@ -289,7 +289,7 @@ void PPPrinter::visit(Program& program)
         for(auto& global : program.getGlobals())
         {
             this->indent();
-            this->buffer << global.first + " : ";
+            this->buffer << global.first << " : ";
             global.second->accept(*this);
             this->buffer << ";\n";
         }
