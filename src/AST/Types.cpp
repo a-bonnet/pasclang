@@ -6,25 +6,21 @@
 namespace pasclang::AST {
 
 // Returns the shared structure pointer to the requested type
-TableOfTypes::Type* TableOfTypes::get(TypeKind kind, std::uint32_t dimension)
-{
+TableOfTypes::Type* TableOfTypes::get(TypeKind kind, std::uint32_t dimension) {
     auto resultKind = this->tableOfTypes.find(kind);
-    if(resultKind != this->tableOfTypes.end())
-    {
+    if (resultKind != this->tableOfTypes.end()) {
         auto resultDimension = resultKind->second.find(dimension);
-        if(resultDimension != resultKind->second.end())
-        {
+        if (resultDimension != resultKind->second.end()) {
             return resultDimension->second.get();
-        }
-        else
-        {
-            this->tableOfTypes[kind][dimension] = std::make_unique<Type>(this, kind, dimension);
+        } else {
+            this->tableOfTypes[kind][dimension] =
+                std::make_unique<Type>(this, kind, dimension);
             return this->tableOfTypes[kind][dimension].get();
         }
     }
-    tableOfTypes[kind][dimension] = std::make_unique<Type>(this, kind, dimension);
+    tableOfTypes[kind][dimension] =
+        std::make_unique<Type>(this, kind, dimension);
     return tableOfTypes[kind][dimension].get();
 }
 
 } // namespace pasclang::AST
-

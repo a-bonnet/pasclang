@@ -2,8 +2,7 @@
 
 namespace pasclang::Parsing {
 
-std::unique_ptr<AST::Program> Driver::parse(std::string& file)
-{
+std::unique_ptr<AST::Program> Driver::parse(std::string& file) {
     Lexer lexer(reporter);
     Parser parser(reporter);
     lexer.doLexing(file);
@@ -11,13 +10,8 @@ std::unique_ptr<AST::Program> Driver::parse(std::string& file)
     return parser.parse();
 }
 
-void Driver::error(const Location&, const std::string&)
-{
-}
+void Driver::error(const Location&, const std::string&) {}
 
-void Driver::error(const std::string&)
-{
-}
+void Driver::error(const std::string&) {}
 
 } // namespace pasclang::Parsing
-

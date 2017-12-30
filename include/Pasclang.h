@@ -15,18 +15,18 @@ enum ExitCode {
     GeneratorError
 };
 
-class PasclangException : public std::runtime_error
-{
-    private:
-        ExitCode code;
-    public:
-        PasclangException(ExitCode code, const char* what = "") : std::runtime_error(what), code(code) { }
-        ~PasclangException() { }
+class PasclangException : public std::runtime_error {
+  private:
+    ExitCode code;
 
-        ExitCode getCode() { return this->code; }
+  public:
+    PasclangException(ExitCode code, const char* what = "")
+        : std::runtime_error(what), code(code) {}
+    ~PasclangException() {}
+
+    ExitCode getCode() { return this->code; }
 };
 
-} // namespace Pasclang
+} // namespace pasclang
 
 #endif
-
