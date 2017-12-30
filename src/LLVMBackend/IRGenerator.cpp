@@ -49,10 +49,10 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition) {
 
     llvm::FunctionType* procedureType;
 
-    if (definition->getResultType().get() != nullptr)
+    if (definition->getResultType() != nullptr)
         procedureType = llvm::FunctionType::get(
-            this->astToLlvmType(definition->getResultType().get()),
-            argumentsTypes, false);
+            this->astToLlvmType(definition->getResultType()), argumentsTypes,
+            false);
     else
         procedureType = llvm::FunctionType::get(
             llvm::Type::getVoidTy(this->context), argumentsTypes, false);
@@ -99,7 +99,7 @@ llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type) {
 }
 
 // emits main body
-llvm::Function* IRGenerator::emitMain(std::unique_ptr<AST::Instruction>& main) {
+llvm::Function* IRGenerator::emitMain(AST::Instruction& main) {
     std::vector<llvm::Type*> mainArgs; // empty for now, we could use command
                                        // line arguments for example
     // void return type means the program's main return value isn't a reliable
@@ -114,7 +114,7 @@ llvm::Function* IRGenerator::emitMain(std::unique_ptr<AST::Instruction>& main) {
     this->builder.SetInsertPoint(mainEntry);
 
     // Generation with visitor
-    main->accept(*this);
+    main.accept(*this);
 
     this->builder.CreateRetVoid();
 
@@ -127,9 +127,7 @@ IRGenerator::IRGenerator(std::string& moduleName)
     this->module = std::make_unique<llvm::Module>(moduleName, this->context);
 }
 
-void IRGenerator::generate(std::unique_ptr<AST::Program>& program) {
-    program->accept(*this);
-}
+void IRGenerator::generate(AST::Program& program) { program.accept(*this); }
 
 // dumps LLVM IR assembly to stderr
 void IRGenerator::dumpModule() { this->module->print(llvm::errs(), nullptr); }
@@ -163,7 +161,7 @@ void IRGenerator::visit(AST::EVariableAccess& variable) {
 }
 
 void IRGenerator::visit(AST::EUnaryOperation& operation) {
-    operation.getExpression()->accept(*this);
+    operation.getExpression().accept(*this);
 
     switch (operation.getType()) {
     // (-b) = (0-b)
@@ -182,9 +180,9 @@ void IRGenerator::visit(AST::EBinaryOperation& operation) {
 
     if (operation.getType() != AST::EBinaryOperation::Type::BinaryLogicalOr &&
         operation.getType() != AST::EBinaryOperation::Type::BinaryLogicalAnd) {
-        operation.getLeft()->accept(*this);
+        operation.getLeft().accept(*this);
         lhs = this->lastValue;
-        operation.getRight()->accept(*this);
+        operation.getRight().accept(*this);
         rhs = this->lastValue;
 
         switch (operation.getType()) {
@@ -246,7 +244,7 @@ void IRGenerator::visit(AST::EBinaryOperation& operation) {
                                   result);
 
         // evaluate(A)
-        operation.getLeft()->accept(*this);
+        operation.getLeft().accept(*this);
         lhs = this->lastValue;
 
         llvm::Function* currentFunction =
@@ -263,7 +261,7 @@ void IRGenerator::visit(AST::EBinaryOperation& operation) {
         this->builder.SetInsertPoint(next);
 
         // evaluate(B)
-        operation.getRight()->accept(*this);
+        operation.getRight().accept(*this);
         rhs = this->lastValue;
         // br %b, end, false
         this->builder.CreateCondBr(rhs, end, final);
@@ -287,7 +285,7 @@ void IRGenerator::visit(AST::EBinaryOperation& operation) {
         this->builder.CreateStore(llvm::ConstantInt::getFalse(this->context),
                                   result);
 
-        operation.getLeft()->accept(*this);
+        operation.getLeft().accept(*this);
         lhs = this->lastValue;
 
         llvm::Function* currentFunction =
@@ -302,7 +300,7 @@ void IRGenerator::visit(AST::EBinaryOperation& operation) {
         this->builder.CreateCondBr(lhs, next, end);
         this->builder.SetInsertPoint(next);
 
-        operation.getRight()->accept(*this);
+        operation.getRight().accept(*this);
         rhs = this->lastValue;
         this->builder.CreateCondBr(rhs, final, end);
         currentFunction->getBasicBlockList().push_back(final);
@@ -333,16 +331,15 @@ void IRGenerator::visit(AST::EFunctionCall& call) {
 }
 
 void IRGenerator::visit(AST::EArrayAccess& access) {
-    access.getArray()->accept(*this);
+    access.getArray().accept(*this);
     // We first need to know the array's address
     llvm::Value* array = this->lastValue;
 
     // we use a single-index GEP since every memory block is dynamically
     // allocated, this is the offset from the array's start for the array's type
     std::vector<llvm::Value*> gepIndex(1);
-    access.getIndex()->accept(*this);
+    access.getIndex().accept(*this);
     gepIndex[0] = this->lastValue;
-    ;
 
     // GEP only computes the address, we still need to load the value from the
     // address
@@ -358,13 +355,13 @@ void IRGenerator::visit(AST::EArrayAllocation& allocation) {
     //  2 is for integers
     //  3 is for pointers (aka multidimensional arrays)
     std::vector<llvm::Value*> arguments(2);
-    allocation.getElements()->accept(*this);
+    allocation.getElements().accept(*this);
     arguments[0] = this->lastValue;
 
-    if (allocation.getType()->getType()->dimension > 1)
+    if (allocation.getType().getType()->dimension > 1)
         arguments[1] =
             llvm::ConstantInt::get(llvm::Type::getInt8Ty(this->context), 3);
-    else if (allocation.getType()->getType()->kind ==
+    else if (allocation.getType().getType()->kind ==
              AST::TableOfTypes::TypeKind::Integer)
         arguments[1] =
             llvm::ConstantInt::get(llvm::Type::getInt8Ty(this->context), 2);
@@ -394,7 +391,7 @@ void IRGenerator::visit(AST::IProcedureCall& call) {
 void IRGenerator::visit(AST::IVariableAssignment& assignment) {
     llvm::Value* lhs;
 
-    assignment.getValue()->accept(*this);
+    assignment.getValue().accept(*this);
     llvm::Value* rhs = this->lastValue;
 
     if (this->locals.find(assignment.getName()) != this->locals.end())
@@ -413,13 +410,18 @@ void IRGenerator::visit(AST::IVariableAssignment& assignment) {
 
 void IRGenerator::visit(AST::IArrayAssignment& assignment) {
     // This is similar to array access to know the address
-    assignment.getValue()->accept(*this);
+    assignment.getValue().accept(*this);
     llvm::Value* value = this->lastValue;
 
     std::vector<llvm::Value*> gepIndex(1);
-    assignment.getArray()->accept(*this);
+
+    AST::EArrayAccess& arrayAccess =
+        static_cast<AST::EArrayAccess&>(assignment.getArray());
+
+    arrayAccess.getArray().accept(*this);
     llvm::Value* array = this->lastValue;
-    assignment.getIndex()->accept(*this);
+
+    arrayAccess.getIndex().accept(*this);
     gepIndex[0] = this->lastValue;
 
     this->lastValue = this->builder.CreateGEP(array, gepIndex, "gep");
@@ -440,7 +442,7 @@ void IRGenerator::visit(AST::ISequence& sequence) {
 
 void IRGenerator::visit(AST::ICondition& condition) {
     // First we need to evaluate the condition to know which branch is taken
-    condition.getCondition()->accept(*this);
+    condition.getCondition().accept(*this);
     llvm::Value* conditionValue = this->lastValue;
 
     // Conditions are supposed to be booleans, we compare the result to false
@@ -461,7 +463,7 @@ void IRGenerator::visit(AST::ICondition& condition) {
     this->builder.CreateCondBr(conditionValue, branchTrue, branchFalse);
     this->builder.SetInsertPoint(branchTrue);
 
-    condition.getTrue()->accept(*this);
+    condition.getTrue().accept(*this);
     this->builder.CreateBr(branchMerge);
     branchTrue = this->builder.GetInsertBlock();
 
@@ -473,7 +475,7 @@ void IRGenerator::visit(AST::ICondition& condition) {
     // note: if you don't check condition this will build but emit invalid IR
     // and segfault, worst case here is it gives a dead code branch which easily
     // gets eaten by optimizers
-    if (condition.getFalse().get() != nullptr)
+    if (condition.getFalse() != nullptr)
         condition.getFalse()->accept(*this);
 
     this->builder.CreateBr(branchMerge);
@@ -486,7 +488,7 @@ void IRGenerator::visit(AST::ICondition& condition) {
 
 void IRGenerator::visit(AST::IRepetition& repetition) {
     // First we evaluate the condition
-    repetition.getCondition()->accept(*this);
+    repetition.getCondition().accept(*this);
     llvm::Value* conditionValue = this->lastValue;
     conditionValue = this->builder.CreateICmpNE(
         conditionValue, llvm::ConstantInt::getFalse(this->context), "test");
@@ -503,11 +505,11 @@ void IRGenerator::visit(AST::IRepetition& repetition) {
     this->builder.CreateCondBr(conditionValue, loop, end);
     this->builder.SetInsertPoint(loop);
 
-    repetition.getInstructions()->accept(*this);
+    repetition.getInstructions().accept(*this);
 
     // Need to check condition again at the end of block to know whether we're
     // looping or breaking
-    repetition.getCondition()->accept(*this);
+    repetition.getCondition().accept(*this);
     conditionValue = this->builder.CreateICmpNE(
         this->lastValue, llvm::ConstantInt::getFalse(this->context), "while");
     this->builder.CreateCondBr(conditionValue, loop, end);
@@ -538,9 +540,9 @@ void IRGenerator::visit(AST::Procedure& definition) {
     }
 
     // The function's return value is the variable bound to its name
-    if (definition.getResultType().get() != nullptr) {
+    if (definition.getResultType() != nullptr) {
         this->locals[definition.getName()] = this->builder.CreateAlloca(
-            this->astToLlvmType(definition.getResultType().get()), nullptr,
+            this->astToLlvmType(definition.getResultType()), nullptr,
             definition.getName());
     }
 
@@ -565,9 +567,9 @@ void IRGenerator::visit(AST::Procedure& definition) {
         this->builder.CreateStore(defaultValue, this->locals[local.first]);
     }
 
-    definition.getBody()->accept(*this);
+    definition.getBody().accept(*this);
 
-    if (definition.getResultType().get() == nullptr)
+    if (definition.getResultType() == nullptr)
         this->builder.CreateRetVoid();
     else {
         llvm::Value* returnValue = this->builder.CreateLoad(

@@ -403,8 +403,7 @@ std::unique_ptr<AST::Instruction> Parser::arrayAssignment() {
     Position end = this->previous().getLocation().getEnd();
 
     std::unique_ptr<Location> location = std::make_unique<Location>(start, end);
-    return std::make_unique<AST::IArrayAssignment>(
-        array->getArray(), array->getIndex(), value, location);
+    return std::make_unique<AST::IArrayAssignment>(expression, value, location);
 }
 
 // call = IDENTIFIER LEFTPAR [expression {COMMA expression}] RIGHTPAR

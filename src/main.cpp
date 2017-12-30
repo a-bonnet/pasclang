@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
 
         if (!frontendOnly) {
             LLVMBackend::IRGenerator ir(moduleName);
-            ir.generate(ast);
+            ir.generate(*ast.get());
             LLVMBackend::IROptimizer opt(optimizationLevel, ir.getModule(),
                                          reporter.get());
             if (dump)

@@ -180,7 +180,7 @@ class EUnaryOperation final : public Expression {
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
     Type getType() const { return this->type; }
-    Expression* getExpression() { return this->expression.get(); }
+    Expression& getExpression() { return *this->expression.get(); }
 };
 
 // Evaluates left then right-hand side, value is the computed operation's
@@ -216,8 +216,8 @@ class EBinaryOperation final : public Expression {
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
     Type getType() const { return this->type; }
-    std::unique_ptr<Expression>& getLeft() { return this->left; }
-    std::unique_ptr<Expression>& getRight() { return this->right; }
+    Expression& getLeft() { return *this->left.get(); }
+    Expression& getRight() { return *this->right.get(); }
 };
 
 // Evaluates all arguments from left to right, value is the function's returned
@@ -256,8 +256,8 @@ class EArrayAccess final : public Expression {
     virtual ~EArrayAccess() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-    std::unique_ptr<Expression>& getArray() { return this->array; }
-    std::unique_ptr<Expression>& getIndex() { return this->index; }
+    Expression& getArray() { return *this->array.get(); }
+    Expression& getIndex() { return *this->index.get(); }
 };
 
 // Allocates a new (eventually multi-dimensional) array. Value is the allocated
@@ -276,8 +276,8 @@ class EArrayAllocation final : public Expression {
     virtual ~EArrayAllocation() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-    std::unique_ptr<PrimitiveType>& getType() { return this->type; }
-    std::unique_ptr<Expression>& getElements() { return this->elements; }
+    PrimitiveType& getType() { return *this->type.get(); }
+    Expression& getElements() { return *this->elements.get(); }
 };
 
 // Evaluates from left to right.
@@ -315,7 +315,7 @@ class IVariableAssignment final : public Instruction {
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
     std::string& getName() { return this->name; }
-    std::unique_ptr<Expression>& getValue() { return this->value; }
+    Expression& getValue() { return *this->value.get(); }
 };
 
 // Computes the array address, the index and uses the resulting address to store
@@ -328,16 +328,14 @@ class IArrayAssignment final : public Instruction {
 
   public:
     IArrayAssignment(std::unique_ptr<Expression>& array,
-                     std::unique_ptr<Expression>& index,
                      std::unique_ptr<Expression>& value, LocationPtr& location)
         : Instruction(location), array(std::move(array)),
           index(std::move(index)), value(std::move(value)) {}
     virtual ~IArrayAssignment() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-    std::unique_ptr<Expression>& getArray() { return this->array; }
-    std::unique_ptr<Expression>& getIndex() { return this->index; }
-    std::unique_ptr<Expression>& getValue() { return this->value; }
+    Expression& getArray() { return *this->array.get(); }
+    Expression& getValue() { return *this->value.get(); }
 };
 
 // Executes each instruction in order.
@@ -376,9 +374,9 @@ class ICondition final : public Instruction {
     virtual ~ICondition() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-    std::unique_ptr<Expression>& getCondition() { return this->condition; }
-    std::unique_ptr<Instruction>& getTrue() { return this->conditionTrue; }
-    std::unique_ptr<Instruction>& getFalse() { return this->conditionFalse; }
+    Expression& getCondition() { return *this->condition.get(); }
+    Instruction& getTrue() { return *this->conditionTrue.get(); }
+    Instruction* getFalse() { return this->conditionFalse.get(); }
 };
 
 // Computes the boolean condition's value, repeats evaluating the instruction as
@@ -397,10 +395,8 @@ class IRepetition final : public Instruction {
     virtual ~IRepetition() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-    std::unique_ptr<Expression>& getCondition() { return this->condition; }
-    std::unique_ptr<Instruction>& getInstructions() {
-        return this->instruction;
-    }
+    Expression& getCondition() { return *this->condition.get(); }
+    Instruction& getInstructions() { return *this->instruction.get(); }
 };
 
 // A function or a procedure.
@@ -431,12 +427,12 @@ class Procedure final : public Node {
     getFormals() {
         return this->formals;
     }
-    std::unique_ptr<PrimitiveType>& getResultType() { return this->resultType; }
+    PrimitiveType* getResultType() { return this->resultType.get(); }
     std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
     getLocals() {
         return this->locals;
     }
-    std::unique_ptr<Instruction>& getBody() { return this->body; }
+    Instruction& getBody() { return *this->body.get(); }
 };
 
 // A program
@@ -466,7 +462,7 @@ class Program final : public Node {
     std::list<std::unique_ptr<Procedure>>& getProcedures() {
         return this->procedures;
     }
-    std::unique_ptr<Instruction>& getMain() { return this->main; }
+    Instruction& getMain() { return *this->main.get(); }
     TableOfTypes* getTypes() { return this->tot.get(); }
 };
 

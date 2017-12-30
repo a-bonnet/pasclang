@@ -57,13 +57,13 @@ void PPPrinter::visit(EUnaryOperation& operation) {
         this->buffer << "not ";
         break;
     }
-    operation.getExpression()->accept(*this);
+    operation.getExpression().accept(*this);
     this->buffer << ")";
 }
 
 void PPPrinter::visit(EBinaryOperation& operation) {
     this->buffer << "(";
-    operation.getLeft()->accept(*this);
+    operation.getLeft().accept(*this);
 
     switch (operation.getType()) {
     case EBinaryOperation::Type::BinaryAddition:
@@ -104,7 +104,7 @@ void PPPrinter::visit(EBinaryOperation& operation) {
         break;
     }
 
-    operation.getRight()->accept(*this);
+    operation.getRight().accept(*this);
     this->buffer << ")";
 }
 
@@ -120,17 +120,17 @@ void PPPrinter::visit(EFunctionCall& call) {
 }
 
 void PPPrinter::visit(EArrayAccess& access) {
-    access.getArray()->accept(*this);
+    access.getArray().accept(*this);
     this->buffer << "[";
-    access.getIndex()->accept(*this);
+    access.getIndex().accept(*this);
     this->buffer << "]";
 }
 
 void PPPrinter::visit(EArrayAllocation& allocation) {
     this->buffer << "new ";
-    allocation.getType()->accept(*this);
+    allocation.getType().accept(*this);
     this->buffer << "[";
-    allocation.getElements()->accept(*this);
+    allocation.getElements().accept(*this);
     this->buffer << "]";
 }
 
@@ -149,16 +149,14 @@ void PPPrinter::visit(IProcedureCall& call) {
 void PPPrinter::visit(IVariableAssignment& assignment) {
     this->indent();
     this->buffer << assignment.getName() << " := ";
-    assignment.getValue()->accept(*this);
+    assignment.getValue().accept(*this);
 }
 
 void PPPrinter::visit(IArrayAssignment& assignment) {
     this->indent();
-    assignment.getArray()->accept(*this);
-    this->buffer << "[";
-    assignment.getIndex()->accept(*this);
-    this->buffer << "] := ";
-    assignment.getValue()->accept(*this);
+    assignment.getArray().accept(*this);
+    this->buffer << " := ";
+    assignment.getValue().accept(*this);
 }
 
 void PPPrinter::visit(ISequence& sequence) {
@@ -180,10 +178,10 @@ void PPPrinter::visit(ISequence& sequence) {
 void PPPrinter::visit(ICondition& condition) {
     this->indent();
     this->buffer << "if ";
-    condition.getCondition()->accept(*this);
+    condition.getCondition().accept(*this);
     this->buffer << " then \n";
     this->indentation++;
-    condition.getTrue()->accept(*this);
+    condition.getTrue().accept(*this);
     this->indentation--;
     if (condition.getFalse() != nullptr) {
         this->buffer << "\n";
@@ -198,10 +196,10 @@ void PPPrinter::visit(ICondition& condition) {
 void PPPrinter::visit(IRepetition& repetition) {
     this->indent();
     this->buffer << "while ";
-    repetition.getCondition()->accept(*this);
+    repetition.getCondition().accept(*this);
     this->buffer << " do\n";
     this->indentation++;
-    repetition.getInstructions()->accept(*this);
+    repetition.getInstructions().accept(*this);
     this->indentation--;
 }
 
@@ -243,7 +241,7 @@ void PPPrinter::visit(Procedure& procedure) {
         this->indentation--;
     }
 
-    procedure.getBody()->accept(*this);
+    procedure.getBody().accept(*this);
     this->buffer << ";\n";
 }
 
@@ -266,7 +264,7 @@ void PPPrinter::visit(Program& program) {
     for (auto& program : program.getProcedures())
         program->accept(*this);
 
-    program.getMain()->accept(*this);
+    program.getMain().accept(*this);
 
     this->buffer << ".\n";
 }

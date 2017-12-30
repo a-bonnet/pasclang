@@ -113,8 +113,8 @@ void TypeChecker::readDeclaration(AST::Procedure* definition) {
         this->redefiningSymbol(name, &definition->getLocation()->getStart(),
                                nullptr);
 
-    if (definition->getResultType().get() != nullptr) {
-        this->procedures[name][name] = definition->getResultType().get();
+    if (definition->getResultType() != nullptr) {
+        this->procedures[name][name] = definition->getResultType();
     }
 
     for (auto& argument : definition->getFormals()) {
@@ -174,26 +174,26 @@ void TypeChecker::visit(AST::EVariableAccess& variable) {
 
 // returns type of the unary operation if correct
 void TypeChecker::visit(AST::EUnaryOperation& operation) {
-    operation.getExpression()->accept(*this);
+    operation.getExpression().accept(*this);
 
     if (operation.getType() == AST::EUnaryOperation::UnaryNot &&
         this->lastType != booleanType)
         this->wrongType(this->lastType, booleanType,
-                        &operation.getExpression()->getLocation()->getStart(),
-                        &operation.getExpression()->getLocation()->getEnd());
+                        &operation.getExpression().getLocation()->getStart(),
+                        &operation.getExpression().getLocation()->getEnd());
 
     else if (operation.getType() == AST::EUnaryOperation::UnaryMinus &&
              this->lastType != integerType)
         this->wrongType(this->lastType, integerType,
-                        &operation.getExpression()->getLocation()->getStart(),
-                        &operation.getExpression()->getLocation()->getEnd());
+                        &operation.getExpression().getLocation()->getStart(),
+                        &operation.getExpression().getLocation()->getEnd());
 }
 
 // returns type of the binary operation if correct
 void TypeChecker::visit(AST::EBinaryOperation& operation) {
-    operation.getLeft()->accept(*this);
+    operation.getLeft().accept(*this);
     const TOT::Type* lhs = this->lastType;
-    operation.getRight()->accept(*this);
+    operation.getRight().accept(*this);
 
     switch (operation.getType()) {
     case AST::EBinaryOperation::BinaryAddition:
@@ -202,12 +202,12 @@ void TypeChecker::visit(AST::EBinaryOperation& operation) {
     case AST::EBinaryOperation::BinaryDivision:
         if (lhs != integerType)
             this->wrongType(lhs, integerType,
-                            &operation.getLeft()->getLocation()->getStart(),
-                            &operation.getLeft()->getLocation()->getEnd());
+                            &operation.getLeft().getLocation()->getStart(),
+                            &operation.getLeft().getLocation()->getEnd());
         if (lhs != this->lastType)
             this->wrongType(this->lastType, lhs,
-                            &operation.getRight()->getLocation()->getEnd(),
-                            &operation.getRight()->getLocation()->getEnd());
+                            &operation.getRight().getLocation()->getEnd(),
+                            &operation.getRight().getLocation()->getEnd());
         this->lastType = integerType;
         break;
 
@@ -217,12 +217,12 @@ void TypeChecker::visit(AST::EBinaryOperation& operation) {
     case AST::EBinaryOperation::BinaryLogicalGreaterEqual:
         if (lhs != integerType)
             this->wrongType(lhs, integerType,
-                            &operation.getLeft()->getLocation()->getStart(),
-                            &operation.getLeft()->getLocation()->getEnd());
+                            &operation.getLeft().getLocation()->getStart(),
+                            &operation.getLeft().getLocation()->getEnd());
         if (lhs != this->lastType)
             this->wrongType(this->lastType, lhs,
-                            &operation.getRight()->getLocation()->getEnd(),
-                            &operation.getRight()->getLocation()->getEnd());
+                            &operation.getRight().getLocation()->getEnd(),
+                            &operation.getRight().getLocation()->getEnd());
         this->lastType = booleanType;
         break;
 
@@ -230,20 +230,20 @@ void TypeChecker::visit(AST::EBinaryOperation& operation) {
     case AST::EBinaryOperation::BinaryLogicalAnd:
         if (lhs != booleanType)
             this->wrongType(lhs, booleanType,
-                            &operation.getLeft()->getLocation()->getStart(),
-                            &operation.getLeft()->getLocation()->getEnd());
+                            &operation.getLeft().getLocation()->getStart(),
+                            &operation.getLeft().getLocation()->getEnd());
         if (lhs != this->lastType)
             this->wrongType(this->lastType, lhs,
-                            &operation.getRight()->getLocation()->getStart(),
-                            &operation.getRight()->getLocation()->getEnd());
+                            &operation.getRight().getLocation()->getStart(),
+                            &operation.getRight().getLocation()->getEnd());
         this->lastType = booleanType;
         break;
 
     default:
         if (lhs != this->lastType)
             this->wrongType(lhs, this->lastType,
-                            &operation.getRight()->getLocation()->getStart(),
-                            &operation.getRight()->getLocation()->getEnd());
+                            &operation.getRight().getLocation()->getStart(),
+                            &operation.getRight().getLocation()->getEnd());
         this->lastType = booleanType;
         break;
     }
@@ -318,27 +318,27 @@ void TypeChecker::visit(AST::EFunctionCall& call) {
 
 // checks index for int type and returns the value at accessed address' type
 void TypeChecker::visit(AST::EArrayAccess& access) {
-    access.getIndex()->accept(*this);
+    access.getIndex().accept(*this);
     if (this->lastType != integerType)
         this->wrongType(this->lastType, integerType,
-                        &access.getIndex()->getLocation()->getStart(),
-                        &access.getIndex()->getLocation()->getEnd());
+                        &access.getIndex().getLocation()->getStart(),
+                        &access.getIndex().getLocation()->getEnd());
 
-    access.getArray()->accept(*this);
+    access.getArray().accept(*this);
     this->lastType = this->ast->getTypes()->get(this->lastType->kind,
                                                 this->lastType->dimension - 1);
 }
 
 // checks size expression for integer type and returns allocated array type
 void TypeChecker::visit(AST::EArrayAllocation& allocation) {
-    allocation.getElements()->accept(*this);
+    allocation.getElements().accept(*this);
     if (this->lastType != integerType) {
         this->wrongType(this->lastType, integerType,
-                        &allocation.getElements()->getLocation()->getStart(),
-                        &allocation.getElements()->getLocation()->getEnd());
+                        &allocation.getElements().getLocation()->getStart(),
+                        &allocation.getElements().getLocation()->getEnd());
     }
 
-    allocation.getType()->accept(*this);
+    allocation.getType().accept(*this);
 }
 
 void TypeChecker::visit(AST::Instruction&) {}
@@ -412,48 +412,44 @@ void TypeChecker::visit(AST::IVariableAssignment& assignment) {
         type = globals[name];
         this->globalInitialized[name] = true;
     } else {
-        assignment.getValue()->accept(*this);
-        this->undefinedSymbol(
-            name, &assignment.getLocation()->getStart(),
-            &assignment.getValue()->getLocation()->getStart());
+        assignment.getValue().accept(*this);
+        this->undefinedSymbol(name, &assignment.getLocation()->getStart(),
+                              &assignment.getValue().getLocation()->getStart());
     }
-    assignment.getValue()->accept(*this);
+    assignment.getValue().accept(*this);
 
     if (type == nullptr) {
         return;
     } else if (this->lastType != type->getType()) {
         this->wrongType(this->lastType, type->getType(),
-                        &assignment.getValue()->getLocation()->getStart(),
-                        &assignment.getValue()->getLocation()->getEnd());
+                        &assignment.getValue().getLocation()->getStart(),
+                        &assignment.getValue().getLocation()->getEnd());
     }
 }
 
 // checks array dimension and index integer type and returns indexed expression
 // type
 void TypeChecker::visit(AST::IArrayAssignment& assignment) {
-    assignment.getArray()->accept(*this);
-    const TOT::Type* arrayType = this->lastType;
-    if (arrayType->dimension == 0) {
-        this->invalidAssignment(
-            arrayType, &assignment.getArray()->getLocation()->getStart(),
-            &assignment.getArray()->getLocation()->getEnd());
-    }
+    AST::EArrayAccess& access =
+        static_cast<AST::EArrayAccess&>(assignment.getArray());
 
-    assignment.getIndex()->accept(*this);
-    const TOT::Type* indexType = this->lastType;
+    access.getIndex().accept(*this);
+    const auto* indexType = this->lastType;
     if (indexType != integerType)
-        this->wrongType(indexType, integerType,
-                        &assignment.getIndex()->getLocation()->getStart(),
-                        &assignment.getIndex()->getLocation()->getEnd());
+        this->wrongType(this->lastType, integerType,
+                        &access.getIndex().getLocation()->getStart(),
+                        &access.getIndex().getLocation()->getEnd());
 
-    assignment.getValue()->accept(*this);
+    access.getArray().accept(*this);
+    const auto* arrayType = this->ast->getTypes()->get(
+        this->lastType->kind, this->lastType->dimension - 1);
+
+    assignment.getValue().accept(*this);
     const TOT::Type* valueType = this->lastType;
-    const TOT::Type* indexedExpressionType =
-        this->ast->getTypes()->get(arrayType->kind, arrayType->dimension - 1);
-    if (indexedExpressionType != valueType)
-        this->wrongType(valueType, indexedExpressionType,
-                        &assignment.getValue()->getLocation()->getStart(),
-                        &assignment.getValue()->getLocation()->getEnd());
+    if (arrayType != valueType)
+        this->wrongType(arrayType, valueType,
+                        &assignment.getValue().getLocation()->getStart(),
+                        &assignment.getValue().getLocation()->getEnd());
 }
 
 // checks each instruction in sequence
@@ -465,25 +461,25 @@ void TypeChecker::visit(AST::ISequence& sequence) {
 
 // checks condition for boolean type and checks instructions
 void TypeChecker::visit(AST::ICondition& condition) {
-    condition.getCondition()->accept(*this);
+    condition.getCondition().accept(*this);
     if (this->lastType != booleanType)
         this->wrongType(this->lastType, booleanType,
-                        &condition.getCondition()->getLocation()->getStart(),
-                        &condition.getCondition()->getLocation()->getStart());
+                        &condition.getCondition().getLocation()->getStart(),
+                        &condition.getCondition().getLocation()->getStart());
 
-    condition.getTrue()->accept(*this);
+    condition.getTrue().accept(*this);
 
-    if (condition.getFalse().get() != nullptr)
+    if (condition.getFalse() != nullptr)
         condition.getFalse()->accept(*this);
 }
 
 // checks condition for boolean type and checks instruction
 void TypeChecker::visit(AST::IRepetition& repetition) {
-    repetition.getCondition()->accept(*this);
+    repetition.getCondition().accept(*this);
     if (this->lastType != booleanType)
         this->wrongType(this->lastType, booleanType, nullptr, nullptr);
 
-    repetition.getInstructions()->accept(*this);
+    repetition.getInstructions().accept(*this);
 }
 
 // defines formals, locals and result type/variable and checks body
@@ -494,8 +490,8 @@ void TypeChecker::visit(AST::Procedure& definition) {
     std::string name = definition.getName();
     this->currentFunction = name;
 
-    if (definition.getResultType().get() != nullptr) {
-        this->locals[name] = definition.getResultType().get();
+    if (definition.getResultType() != nullptr) {
+        this->locals[name] = definition.getResultType();
         this->localUsage[name] = false;
         this->localInitialized[name] = false;
     }
@@ -520,7 +516,7 @@ void TypeChecker::visit(AST::Procedure& definition) {
                 local.first, &local.second->getLocation()->getStart(), nullptr);
     }
 
-    definition.getBody()->accept(*this);
+    definition.getBody().accept(*this);
 
     for (auto& local : this->locals) {
         // Skip function name, for example functions that return a constant
@@ -561,7 +557,7 @@ void TypeChecker::visit(AST::Program& program) {
 
     this->locals.clear();
     this->currentFunction = "";
-    program.getMain()->accept(*this);
+    program.getMain().accept(*this);
 
     for (auto& global : this->globals) {
         if (!this->globalUsage[global.first])

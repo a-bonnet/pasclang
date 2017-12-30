@@ -38,14 +38,14 @@ class IRGenerator final : public AST::Visitor {
 
     llvm::Value* emitDeclaration(AST::Procedure* definition);
     llvm::Value* emitGlobal(std::string& name, llvm::Type* type);
-    llvm::Function* emitMain(std::unique_ptr<AST::Instruction>& main);
+    llvm::Function* emitMain(AST::Instruction& main);
     llvm::Type* astToLlvmType(AST::PrimitiveType* type);
 
   public:
     IRGenerator(std::string& moduleName);
     ~IRGenerator() {}
 
-    void generate(std::unique_ptr<AST::Program>& program);
+    void generate(AST::Program& program);
     void dumpModule();
     llvm::Module* getModule() { return this->module.get(); }
 
