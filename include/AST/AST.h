@@ -236,8 +236,13 @@ class EFunctionCall final : public Expression {
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
     std::string& getName() { return this->name; }
-    std::list<std::unique_ptr<Expression>>& getActuals() {
-        return this->actuals;
+
+    std::list<Expression*> getActuals() {
+        std::list<Expression*> actuals;
+        for (const auto& actual : this->actuals) {
+            actuals.push_back(actual.get());
+        }
+        return actuals;
     }
 };
 
@@ -295,8 +300,13 @@ class IProcedureCall final : public Instruction {
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
     std::string& getName() { return this->name; }
-    std::list<std::unique_ptr<Expression>>& getActuals() {
-        return this->actuals;
+
+    std::list<Expression*> getActuals() {
+        std::list<Expression*> actuals;
+        for (const auto& actual : this->actuals) {
+            actuals.push_back(actual.get());
+        }
+        return actuals;
     }
 };
 
@@ -423,15 +433,25 @@ class Procedure final : public Node {
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
     std::string& getName() { return this->name; }
-    std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
-    getFormals() {
-        return this->formals;
+
+    std::list<std::pair<std::string_view, PrimitiveType*>> getFormals() {
+        std::list<std::pair<std::string_view, PrimitiveType*>> formals;
+        for (const auto& pair : this->formals) {
+            formals.emplace_back(std::pair(pair.first, pair.second.get()));
+        }
+        return formals;
     }
+
     PrimitiveType* getResultType() { return this->resultType.get(); }
-    std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
-    getLocals() {
-        return this->locals;
+
+    std::list<std::pair<std::string_view, PrimitiveType*>> getLocals() {
+        std::list<std::pair<std::string_view, PrimitiveType*>> locals;
+        for (const auto& pair : this->locals) {
+            locals.emplace_back(std::pair(pair.first, pair.second.get()));
+        }
+        return locals;
     }
+
     Instruction& getBody() { return *this->body.get(); }
 };
 
@@ -455,13 +475,22 @@ class Program final : public Node {
     virtual ~Program() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 
-    std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
-    getGlobals() {
-        return this->globals;
+    std::list<std::pair<std::string_view, PrimitiveType*>> getGlobals() {
+        std::list<std::pair<std::string_view, PrimitiveType*>> globals;
+        for (const auto& pair : this->globals) {
+            globals.emplace_back(std::pair(pair.first, pair.second.get()));
+        }
+        return globals;
     }
-    std::list<std::unique_ptr<Procedure>>& getProcedures() {
-        return this->procedures;
+
+    std::list<Procedure*> getProcedures() {
+        std::list<Procedure*> procedures;
+        for (const auto& procedure : this->procedures) {
+            procedures.push_back(procedure.get());
+        }
+        return procedures;
     }
+
     Instruction& getMain() { return *this->main.get(); }
     TableOfTypes* getTypes() { return this->tot.get(); }
 };

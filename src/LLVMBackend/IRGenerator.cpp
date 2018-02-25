@@ -44,8 +44,8 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition) {
     // result type and the procedure name
     std::vector<llvm::Type*> argumentsTypes;
     argumentsTypes.reserve(definition->getFormals().size());
-    for (auto& argument : definition->getFormals())
-        argumentsTypes.push_back(this->astToLlvmType(argument.second.get()));
+    for (const auto& pair : definition->getFormals())
+        argumentsTypes.push_back(this->astToLlvmType(pair.second));
 
     llvm::FunctionType* procedureType;
 
@@ -67,7 +67,7 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition) {
     auto formalsIterator = definition->getFormals().begin();
     for (auto argument = procedure->arg_begin();
          argument != procedure->arg_end(); argument++) {
-        argument->setName(formalsIterator->first);
+        argument->setName(std::string(formalsIterator->first));
         formalsIterator++;
     }
 

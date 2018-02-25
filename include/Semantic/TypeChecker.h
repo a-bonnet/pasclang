@@ -8,6 +8,7 @@
 
 #include "AST/AST.h"
 #include "Message/BaseReporter.h"
+#include <string_view>
 #include <vector>
 
 namespace pasclang::Semantic {
@@ -23,10 +24,10 @@ class TypeChecker : public AST::Visitor {
     bool errorHappened = false;
     const TOT::Type* lastType;
     std::unique_ptr<AST::Program> ast;
-    std::map<std::string, AST::PrimitiveType*> globals;
+    std::map<std::string, AST::PrimitiveType*, std::less<>> globals;
     std::map<std::string, std::map<std::string, AST::PrimitiveType*>>
         procedures;
-    std::map<std::string, AST::PrimitiveType*> locals;
+    std::map<std::string, AST::PrimitiveType*, std::less<>> locals;
     std::map<std::string, bool> localUsage;
     std::map<std::string, bool> globalUsage;
     std::map<std::string, bool> localInitialized;

@@ -33,8 +33,8 @@ class IRGenerator final : public AST::Visitor {
     llvm::LLVMContext context;
     llvm::IRBuilder<> builder;
     std::unique_ptr<llvm::Module> module;
-    std::map<std::string, llvm::GlobalVariable*> globals;
-    std::map<std::string, llvm::AllocaInst*> locals;
+    std::map<std::string, llvm::GlobalVariable*, std::less<>> globals;
+    std::map<std::string, llvm::AllocaInst*, std::less<>> locals;
 
     llvm::Value* emitDeclaration(AST::Procedure* definition);
     llvm::Value* emitGlobal(std::string& name, llvm::Type* type);

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <string_view>
 
 #include "Pasclang.h"
 
@@ -117,11 +118,12 @@ void TypeChecker::readDeclaration(AST::Procedure* definition) {
         this->procedures[name][name] = definition->getResultType();
     }
 
-    for (auto& argument : definition->getFormals()) {
-        if (this->locals.find(argument.first) == this->locals.end()) {
-            this->procedures[name][argument.first] = argument.second.get();
+    for (const auto argument : definition->getFormals()) {
+        if (const auto found = this->locals.find(argument.first);
+            found == this->locals.end()) {
+            this->procedures[name][found->first] = argument.second;
         } else
-            this->redefiningSymbol(argument.first,
+            this->redefiningSymbol(found->first,
                                    &argument.second->getLocation()->getStart(),
                                    nullptr);
     }
@@ -282,16 +284,13 @@ void TypeChecker::visit(AST::EFunctionCall& call) {
     }
 
     // Is valid since we made sure the function exists above
-    std::list<std::unique_ptr<AST::Procedure>>::const_iterator procedure =
-        std::find_if(this->ast->getProcedures().begin(),
-                     this->ast->getProcedures().end(),
-                     [&name](std::unique_ptr<AST::Procedure>& p) {
-                         return (p->getName() == name);
-                     });
+    auto procedure_iterator = std::find_if(
+        this->ast->getProcedures().begin(), this->ast->getProcedures().end(),
+        [&name](AST::Procedure* p) { return (p->getName() == name); });
 
-    std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>>&
-        formals = procedure->get()->getFormals();
-    std::list<std::unique_ptr<AST::Expression>>& actuals = call.getActuals();
+    auto* procedure = *procedure_iterator;
+    auto formals = procedure->getFormals();
+    auto actuals = call.getActuals();
 
     if (formals.size() != actuals.size()) {
         this->invalidArity(name, &call.getLocation()->getStart(),
@@ -300,20 +299,21 @@ void TypeChecker::visit(AST::EFunctionCall& call) {
     }
 
     auto formal = formals.begin();
-    for (auto actual = actuals.begin(); actual != actuals.end();
-         formal++, actual++) {
-        actual->get()->accept(*this);
+    for (auto actual_iterator = actuals.begin();
+         actual_iterator != actuals.end(); formal++, actual_iterator++) {
+        auto actual = *actual_iterator;
+        actual->accept(*this);
         if (formal->second->getType() != this->lastType)
             this->wrongType(this->lastType, formal->second->getType(),
-                            &actual->get()->getLocation()->getStart(),
-                            &actual->get()->getLocation()->getEnd());
+                            &actual->getLocation()->getStart(),
+                            &actual->getLocation()->getEnd());
     }
 
-    if (procedure->get()->getResultType()->getType() == nullptr)
+    if (procedure->getResultType()->getType() == nullptr)
         this->invalidCall(name, &call.getLocation()->getStart(),
                           &call.getLocation()->getEnd());
 
-    this->lastType = procedure->get()->getResultType()->getType();
+    this->lastType = procedure->getResultType()->getType();
 }
 
 // checks index for int type and returns the value at accessed address' type
@@ -365,35 +365,39 @@ void TypeChecker::visit(AST::IProcedureCall& call) {
     }
 
     std::string name = call.getName();
-    auto procedure = std::find_if(
+    auto procedure_iterator = std::find_if(
         this->ast->getProcedures().begin(), this->ast->getProcedures().end(),
-        [&name](std::unique_ptr<AST::Procedure>& currentProcedure) {
+        [&name](AST::Procedure* currentProcedure) {
             return currentProcedure->getName() == name;
         });
 
-    if (procedure == this->ast->getProcedures().end())
+    if (procedure_iterator == this->ast->getProcedures().end()) {
         this->undefinedSymbol(name, &call.getLocation()->getStart(),
                               &call.getLocation()->getEnd());
+        this->lastType = nullptr;
+        return;
+    }
 
-    std::list<std::pair<std::string, std::unique_ptr<AST::PrimitiveType>>>&
-        formals = procedure->get()->getFormals();
-    std::list<std::unique_ptr<AST::Expression>>& actuals = call.getActuals();
+    auto* procedure = *procedure_iterator;
+    auto formals = procedure->getFormals();
+    auto actuals = call.getActuals();
 
     if (formals.size() != actuals.size())
         this->invalidArity(name, &actuals.front()->getLocation()->getStart(),
                            &actuals.back()->getLocation()->getEnd());
 
     auto formal = formals.begin();
-    for (auto actual = actuals.begin(); actual != actuals.end();
-         formal++, actual++) {
-        actual->get()->accept(*this);
+    for (auto actual_iterator = actuals.begin();
+         actual_iterator != actuals.end(); formal++, actual_iterator++) {
+        auto* actual = *actual_iterator;
+        actual->accept(*this);
         if (formal->second->getType() != this->lastType)
             this->wrongType(this->lastType, formal->second->getType(),
-                            &actual->get()->getLocation()->getStart(),
-                            &actual->get()->getLocation()->getEnd());
+                            &actual->getLocation()->getStart(),
+                            &actual->getLocation()->getEnd());
     }
 
-    if (procedure->get()->getResultType() != nullptr)
+    if (procedure->getResultType() != nullptr)
         this->invalidCall(name, &call.getLocation()->getStart(),
                           &call.getLocation()->getEnd());
 
@@ -497,23 +501,26 @@ void TypeChecker::visit(AST::Procedure& definition) {
     }
 
     for (auto& argument : definition.getFormals()) {
-        if (this->locals.find(argument.first) == this->locals.end()) {
-            this->locals[argument.first] = argument.second.get();
-            this->localInitialized[argument.first] = true;
+        if (auto found = this->locals.find(argument.first);
+            found == this->locals.end()) {
+            this->locals[found->first] = argument.second;
+            this->localInitialized[found->first] = true;
         } else
-            this->redefiningSymbol(argument.first,
+            this->redefiningSymbol(found->first,
                                    &argument.second->getLocation()->getStart(),
                                    nullptr);
     }
 
     for (auto& local : definition.getLocals()) {
-        if (this->locals.find(local.first) == this->locals.end()) {
-            this->locals[local.first] = local.second.get();
-            this->localInitialized[local.first] = false;
-            this->localUsage[local.first] = false;
+        if (auto found = this->locals.find(local.first);
+            found == this->locals.end()) {
+            this->locals[found->first] = local.second;
+            this->localInitialized[found->first] = false;
+            this->localUsage[found->first] = false;
         } else
-            this->redefiningSymbol(
-                local.first, &local.second->getLocation()->getStart(), nullptr);
+            this->redefiningSymbol(found->first,
+                                   &local.second->getLocation()->getStart(),
+                                   nullptr);
     }
 
     definition.getBody().accept(*this);
@@ -536,23 +543,24 @@ void TypeChecker::visit(AST::Program& program) {
 
     // Table of global variables
     for (auto& global : program.getGlobals()) {
-        if (this->globals.find(global.first) == this->globals.end()) {
-            this->globals[global.first] = global.second.get();
-            this->globalUsage[global.first] = false;
-            this->globalInitialized[global.first] = false;
+        if (auto found = this->globals.find(global.first);
+            found == this->globals.end()) {
+            this->globals[found->first] = global.second;
+            this->globalUsage[found->first] = false;
+            this->globalInitialized[found->first] = false;
         } else
-            this->redefiningSymbol(global.first,
+            this->redefiningSymbol(found->first,
                                    &global.second->getLocation()->getStart(),
                                    &global.second->getLocation()->getEnd());
     }
 
     // Checking declarations comes first since functions might call each other
     // recursively
-    for (const auto& procedure : program.getProcedures())
-        this->readDeclaration(procedure.get());
+    for (const auto procedure : program.getProcedures())
+        this->readDeclaration(procedure);
 
     // Table of functions and procedures
-    for (auto& procedure : program.getProcedures())
+    for (const auto procedure : program.getProcedures())
         procedure->accept(*this);
 
     this->locals.clear();
