@@ -323,14 +323,13 @@ class IVariableAssignment final : public Instruction {
 class IArrayAssignment final : public Instruction {
   private:
     std::unique_ptr<Expression> array;
-    std::unique_ptr<Expression> index;
     std::unique_ptr<Expression> value;
 
   public:
     IArrayAssignment(std::unique_ptr<Expression>& array,
                      std::unique_ptr<Expression>& value, LocationPtr& location)
         : Instruction(location), array(std::move(array)),
-          index(std::move(index)), value(std::move(value)) {}
+          value(std::move(value)) {}
     virtual ~IArrayAssignment() {}
     virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
 

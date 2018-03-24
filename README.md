@@ -149,7 +149,7 @@ Command-line usage is documented by invoking the pasclang executable (present in
 
 ## Support
 
-Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 10 with clang++ 5.0.1 and LLVM 5.0.1 using libstdc++-7.2.1. Stable Pasclang versions have also been tested on musl-based distributions (Alpine Linux) as well as OpenBSD 6.1 and FreeBSD 11.0 (using LLVM and clang 3.9 for BSD distributions). Note that you may have to install static development libraries on some systems that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
+Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 10 with clang++ 6.0.0 and gcc 7.2 using LLVM 6.0.0 and libstdc++-7.2.1. Note that you may have to install static development libraries on some systems that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
 
 ## Source tree
 
@@ -172,7 +172,7 @@ Finally we have the Pseudo-Pascal source files used for testing. During the test
 ## Roadmap
 
 ### Short-term
-* Making sure Pasclang always builds against the latest released version of LLVM from the [official website](https://www.llvm.org/)
+* Making sure Pasclang always builds with the latest released version of LLVM from the [official website](https://www.llvm.org/), currently LLVM 6.0.0.
 
 ### Mid-term
 * Finish porting the codebase to standard C++17
