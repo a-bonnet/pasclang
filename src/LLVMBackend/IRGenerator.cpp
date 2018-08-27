@@ -49,6 +49,7 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition) {
 
     llvm::FunctionType* procedureType;
 
+    // TODO: Check whether optimizer ruins this 
     if (definition->getResultType() != nullptr)
         procedureType = llvm::FunctionType::get(
             this->astToLlvmType(definition->getResultType()), argumentsTypes,
@@ -475,6 +476,7 @@ void IRGenerator::visit(AST::ICondition& condition) {
     // note: if you don't check condition this will build but emit invalid IR
     // and segfault, worst case here is it gives a dead code branch which easily
     // gets eaten by optimizers
+    // TODO: Check whether optimizer ruins this
     if (condition.getFalse() != nullptr)
         condition.getFalse()->accept(*this);
 
@@ -540,6 +542,7 @@ void IRGenerator::visit(AST::Procedure& definition) {
     }
 
     // The function's return value is the variable bound to its name
+    // TODO: Check whether optimizer ruins this
     if (definition.getResultType() != nullptr) {
         this->locals[definition.getName()] = this->builder.CreateAlloca(
             this->astToLlvmType(definition.getResultType()), nullptr,
