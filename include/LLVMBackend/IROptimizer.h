@@ -6,8 +6,8 @@
 #ifndef PASCLANG_LLVMBACKEND_IROPTIMIZER_H
 #define PASCLANG_LLVMBACKEND_IROPTIMIZER_H
 
-#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/PassManager.h>
 #include <memory>
 
 #include "Message/BaseReporter.h"
@@ -18,7 +18,8 @@ namespace pasclang::LLVMBackend {
 class IROptimizer {
   private:
     unsigned char optimizationLevel;
-    std::unique_ptr<llvm::legacy::FunctionPassManager> functionPassManager;
+    std::unique_ptr<llvm::FunctionPassManager> functionPassManager;
+    std::unique_ptr<llvm::FunctionAnalysisManager> functionAnalysisManager;
     llvm::Module* module;
     Message::BaseReporter* reporter;
 

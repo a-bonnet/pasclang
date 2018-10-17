@@ -1,8 +1,12 @@
 #include "LLVMBackend/IROptimizer.h"
 #include "llvm/IR/Function.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Passes/PassBuilder.h"
 
+#include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Scalar/SROA.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
+#include "llvm/Transforms/Scalar/TailRecursionElimination.h"
 #include <iostream>
 
 namespace pasclang::LLVMBackend {
@@ -11,16 +15,22 @@ IROptimizer::IROptimizer(unsigned char optimizationLevel, llvm::Module* module,
                          Message::BaseReporter* reporter)
     : optimizationLevel(optimizationLevel), module(module), reporter(reporter) {
     this->functionPassManager =
-        std::make_unique<llvm::legacy::FunctionPassManager>(module);
+        std::make_unique<llvm::FunctionPassManager>(module);
+    this->functionAnalysisManager =
+        std::make_unique<llvm::FunctionAnalysisManager>();
+
+    llvm::PassBuilder passBuilder;
+    passBuilder.registerFunctionAnalyses(*functionAnalysisManager);
 
     if (this->optimizationLevel > 0) {
-        this->functionPassManager->add(
-            llvm::createPromoteMemoryToRegisterPass());
-        this->functionPassManager->add(llvm::createDeadCodeEliminationPass());
-        this->functionPassManager->add(llvm::createGVNPass());
-        this->functionPassManager->add(llvm::createInstructionCombiningPass());
-        this->functionPassManager->add(llvm::createCFGSimplificationPass());
-        this->functionPassManager->add(llvm::createReassociatePass());
+        // Example adding passes, notice PassBuilder<Function> has very
+        // convenient methods to add the usual -O1, -O2... optimizations
+        this->functionPassManager->addPass(llvm::SROA());
+        this->functionPassManager->addPass(llvm::GVNHoistPass());
+        this->functionPassManager->addPass(llvm::GVNSinkPass());
+        this->functionPassManager->addPass(llvm::SimplifyCFGPass());
+        this->functionPassManager->addPass(llvm::TailCallElimPass());
+        this->functionPassManager->addPass(llvm::SimplifyCFGPass());
     }
 
     if (this->optimizationLevel > 1) {
@@ -32,12 +42,11 @@ IROptimizer::IROptimizer(unsigned char optimizationLevel, llvm::Module* module,
                                 nullptr, nullptr);
     }
 
-    this->functionPassManager->doInitialization();
-
     for (auto functionIterator = this->module->getFunctionList().begin();
          functionIterator != this->module->getFunctionList().end();
          functionIterator++) {
-        this->functionPassManager->run(*functionIterator);
+        this->functionPassManager->run(*functionIterator,
+                                       *functionAnalysisManager);
     }
 }
 
