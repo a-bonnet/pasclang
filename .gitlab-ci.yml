@@ -3,8 +3,8 @@ image: gcc
 build:
   stage: build
   before_script: 
-    - echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-6.0 main" >> /etc/apt/sources.list
-    - echo "deb-src http://apt.llvm.org/stretch/ llvm-toolchain-stretch-6.0 main" >> /etc/apt/sources.list
+    - echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-7 main" >> /etc/apt/sources.list
+    - echo "deb-src http://apt.llvm.org/stretch/ llvm-toolchain-stretch-7 main" >> /etc/apt/sources.list
     - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
     - apt update && apt -y install make cmake git wget llvm-7-dev
   script:
@@ -19,8 +19,8 @@ build:
 test:
   stage: test
   before_script: 
-    - echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-6.0 main" >> /etc/apt/sources.list
-    - echo "deb-src http://apt.llvm.org/stretch/ llvm-toolchain-stretch-6.0 main" >> /etc/apt/sources.list
+    - echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-7 main" >> /etc/apt/sources.list
+    - echo "deb-src http://apt.llvm.org/stretch/ llvm-toolchain-stretch-7 main" >> /etc/apt/sources.list
     - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
     - apt update && apt -y install make cmake git wget llvm-7-dev
   script:
