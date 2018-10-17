@@ -38,7 +38,7 @@ end.
 
 ## The compiler
 
-The current stable version is [Pasclang 1.2](https://gitlab.com/abonnet/pasclang/tree/1.2). Latest development version can be found in the [master branch](https://gitlab.com/abonnet/pasclang/tree/master).
+The current stable version is [Pasclang 1.3](https://gitlab.com/abonnet/pasclang/tree/1.3). Latest development version can be found in the [master branch](https://gitlab.com/abonnet/pasclang/tree/master).
 
 The compiler operates via successive passes. The first one consists of parsing the input and producing the corresponding syntax tree (lexical and syntactic analyses). The next step is done with the type checker (semantic analysis) before using LLVM to produce the output.
 
@@ -149,7 +149,7 @@ Command-line usage is documented by invoking the pasclang executable (present in
 
 ## Support
 
-Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 10 with clang++ 6.0.0 and gcc 7.2 using LLVM 6.0.0 and libstdc++-7.2.1. Note that you may have to install static development libraries on some systems that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
+Pasclang is developed and tested on an amd64 Linux installation. It is known to build and pass all tests on Debian 10 with clang++ 7.0.0 and gcc 8.2 using LLVM 8.0.0 and libstdc++-8.2. Note that you may have to install static development libraries on some systems that do not ship them by default, e.g. if the linker gives the `cannot find -lc/-lstdc++/-lm` error. It should work on any Unix-like system with no change. Other platforms might require some adjustments. This is especially the case for the currently used way to link files after objects are built, see the `#warning` in `src/main.cpp`.
 
 ## Source tree
 
@@ -172,14 +172,13 @@ Finally we have the Pseudo-Pascal source files used for testing. During the test
 ## Roadmap
 
 ### Short-term
-* Making sure Pasclang always builds with the latest released version of LLVM from the [official website](https://www.llvm.org/), currently LLVM 6.0.0.
+* Making sure Pasclang always builds with the latest released version of LLVM from the [official website](https://www.llvm.org/), currently LLVM 7.0.0.
 
 ### Mid-term
-* Finish porting the codebase to standard C++17
-* Implement an elementary garbage collector
+* Implement garbage collection
 
 ### Long-term
-* Maybe implement some optimizations in the front-end
+* Custom middle and back-end
 
 ## Acknowledgements
 

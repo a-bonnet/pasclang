@@ -38,7 +38,7 @@ end.
 
 ## Le compilateur
 
-La version stable actuelle est [Pasclang 1.2](https://gitlab.com/abonnet/pasclang/tree/1.2). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
+La version stable actuelle est [Pasclang 1.3](https://gitlab.com/abonnet/pasclang/tree/1.3). La version en développement se trouve dans la branche [master](https://gitlab.com/abonnet/pasclang/tree/master).
 
 Le compilateur agit par étapes successives comme c'est le cas de la plupart des compilateurs modernes. La première étape correspond à celle des analyses lexicales et syntaxiques, ensuite vient la vérification des types. L'arbre de syntaxe abstraite est directement utilisé pour la génération de code même si ce n'est pas idéal, utiliser une structure non-typée serait superflu dans notre cas puisque LLVM s'occupe des transformations intermédiaires.
 
@@ -149,7 +149,7 @@ L'aide à l'utilisation en ligne de commande de Pasclang est donnée lorsque le 
 
 ## Support
 
-Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 10. Les compilateurs testés sont clang 6.0.0 et gcc 7.2 avec LLVM 6.0.0 et libstdc++-7.2.1. Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
+Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 10. Les compilateurs testés sont clang 7.0.0 et gcc 8.2 avec LLVM 7.0.0 et libstdc++-8.2. Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
 
 ## Arborescence des sources
 
@@ -172,14 +172,13 @@ Les tests sont exécutés en compilant chaque fichier .pp, puis en comparant la 
 ## Feuille de route
 
 ### Court terme
-* Garantir que Pasclang est conforme à la dernière version de LLVM publiée sur le [site officiel](https://www.llvm.org), actuellement LLVM 6.0.0.
+* Garantir que Pasclang est conforme à la dernière version de LLVM publiée sur le [site officiel](https://www.llvm.org), actuellement LLVM 7.0.0.
 
 ### Moyen terme
-* Finir le portage vers C++17
-* Implanter un ramasseur de miettes élémentaire
+* Implanter un ramasseur de miettes
 
 ### Long terme
-* Éventuellement des transformations (passes d'optimisation) au niveau du front-end
+* Génération et optimisation de code native
 
 ## Remerciements
 

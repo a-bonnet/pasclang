@@ -14,8 +14,7 @@ namespace pasclang::LLVMBackend {
 IROptimizer::IROptimizer(unsigned char optimizationLevel, llvm::Module* module,
                          Message::BaseReporter* reporter)
     : optimizationLevel(optimizationLevel), module(module), reporter(reporter) {
-    this->functionPassManager =
-        std::make_unique<llvm::FunctionPassManager>(module);
+    this->functionPassManager = std::make_unique<llvm::FunctionPassManager>();
     this->functionAnalysisManager =
         std::make_unique<llvm::FunctionAnalysisManager>();
 

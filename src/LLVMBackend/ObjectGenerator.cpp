@@ -61,7 +61,8 @@ ObjectGenerator::ObjectGenerator(bool assembly, std::string& objectName,
         (assembly ? llvm::TargetMachine::CGFT_AssemblyFile
                   : llvm::TargetMachine::CGFT_ObjectFile);
 
-    if (machine->addPassesToEmitFile(passManager, outputFile, fileType)) {
+    if (machine->addPassesToEmitFile(passManager, outputFile, nullptr,
+                                     fileType)) {
         std::string errorMessage =
             "Target machine cannot emit file of this type";
         this->reporter->message(Message::MessageType::Error, errorMessage,
