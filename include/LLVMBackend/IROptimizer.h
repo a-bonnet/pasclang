@@ -16,13 +16,6 @@
 namespace pasclang::LLVMBackend {
 
 class IROptimizer {
-  private:
-    unsigned char optimizationLevel;
-    std::unique_ptr<llvm::FunctionPassManager> functionPassManager;
-    std::unique_ptr<llvm::FunctionAnalysisManager> functionAnalysisManager;
-    llvm::Module* module;
-    Message::BaseReporter* reporter;
-
   public:
     IROptimizer(unsigned char optimizationLevel, llvm::Module* module,
                 Message::BaseReporter* reporter);

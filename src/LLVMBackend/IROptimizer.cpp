@@ -11,41 +11,45 @@
 
 namespace pasclang::LLVMBackend {
 
+namespace {
+std::array<llvm::PassBuilder::OptimizationLevel, 4> optimizationMap{
+    {llvm::PassBuilder::O0, llvm::PassBuilder::O1, llvm::PassBuilder::O1,
+     llvm::PassBuilder::O1}};
+}
+
 IROptimizer::IROptimizer(unsigned char optimizationLevel, llvm::Module* module,
-                         Message::BaseReporter* reporter)
-    : optimizationLevel(optimizationLevel), module(module), reporter(reporter) {
-    this->functionPassManager = std::make_unique<llvm::FunctionPassManager>();
-    this->functionAnalysisManager =
-        std::make_unique<llvm::FunctionAnalysisManager>();
+                         Message::BaseReporter* reporter) {
+    if (optimizationLevel == 0)
+        return;
+
+    llvm::LoopAnalysisManager LAM;
+    llvm::FunctionAnalysisManager FAM;
+    llvm::CGSCCAnalysisManager CAM;
+    llvm::ModuleAnalysisManager MAM;
 
     llvm::PassBuilder passBuilder;
-    passBuilder.registerFunctionAnalyses(*functionAnalysisManager);
+    passBuilder.registerModuleAnalyses(MAM);
+    passBuilder.registerCGSCCAnalyses(CAM);
+    passBuilder.registerFunctionAnalyses(FAM);
+    passBuilder.registerLoopAnalyses(LAM);
+    passBuilder.crossRegisterProxies(LAM, FAM, CAM, MAM);
 
-    if (this->optimizationLevel > 0) {
-        // Example adding passes, notice PassBuilder<Function> has very
-        // convenient methods to add the usual -O1, -O2... optimizations
-        this->functionPassManager->addPass(llvm::SROA());
-        this->functionPassManager->addPass(llvm::GVNHoistPass());
-        this->functionPassManager->addPass(llvm::GVNSinkPass());
-        this->functionPassManager->addPass(llvm::SimplifyCFGPass());
-        this->functionPassManager->addPass(llvm::TailCallElimPass());
-        this->functionPassManager->addPass(llvm::SimplifyCFGPass());
-    }
+    auto functionPassManager = passBuilder.buildFunctionSimplificationPipeline(
+        optimizationMap[optimizationLevel],
+        llvm::PassBuilder::ThinLTOPhase::None, false);
 
-    if (this->optimizationLevel > 1) {
-        // Add more passes
-        // In the meantime...
+    if (optimizationLevel > 1) {
         std::string noteMessage =
             "optimization levels higher than 1 are currently equivalent to -O1";
-        this->reporter->message(Message::MessageType::Note, noteMessage,
-                                nullptr, nullptr);
+        reporter->message(Message::MessageType::Note, noteMessage, nullptr,
+                          nullptr);
     }
 
-    for (auto functionIterator = this->module->getFunctionList().begin();
-         functionIterator != this->module->getFunctionList().end();
+    for (auto functionIterator = module->getFunctionList().begin();
+         functionIterator != module->getFunctionList().end();
          functionIterator++) {
-        this->functionPassManager->run(*functionIterator,
-                                       *functionAnalysisManager);
+        if (!functionIterator->empty())
+            functionPassManager.run(*functionIterator, FAM);
     }
 }
 
