@@ -29,17 +29,17 @@ namespace pasclang::LLVMBackend {
 
 class IRGenerator final : public AST::Visitor {
   private:
-    llvm::Value* lastValue = nullptr;
-    llvm::LLVMContext context;
-    llvm::IRBuilder<> builder;
+    mutable llvm::Value* lastValue = nullptr;
+    mutable llvm::LLVMContext context;
+    mutable llvm::IRBuilder<> builder;
     std::unique_ptr<llvm::Module> module;
-    std::map<std::string, llvm::GlobalVariable*> globals;
-    std::map<std::string, llvm::AllocaInst*> locals;
+    mutable std::map<std::string, llvm::GlobalVariable*> globals;
+    mutable std::map<std::string, llvm::AllocaInst*> locals;
 
-    llvm::Value* emitDeclaration(AST::Procedure* definition);
-    llvm::Value* emitGlobal(std::string& name, llvm::Type* type);
-    llvm::Function* emitMain(AST::Instruction& main);
-    llvm::Type* astToLlvmType(AST::PrimitiveType* type);
+    llvm::Value* emitDeclaration(const AST::Procedure* definition) const;
+    llvm::Value* emitGlobal(const std::string& name, llvm::Type* type) const;
+    llvm::Function* emitMain(const AST::Instruction& main) const;
+    llvm::Type* astToLlvmType(const AST::PrimitiveType* type) const;
 
   public:
     IRGenerator(std::string& moduleName);
@@ -49,26 +49,26 @@ class IRGenerator final : public AST::Visitor {
     void dumpModule();
     llvm::Module* getModule() { return this->module.get(); }
 
-    void visit(AST::PrimitiveType& type) override;
-    void visit(AST::Expression& expression) override;
-    void visit(AST::EConstant& constant) override;
-    void visit(AST::ECBoolean& boolean) override;
-    void visit(AST::ECInteger& integer) override;
-    void visit(AST::EVariableAccess& variable) override;
-    void visit(AST::EUnaryOperation& operation) override;
-    void visit(AST::EBinaryOperation& operation) override;
-    void visit(AST::EFunctionCall& call) override;
-    void visit(AST::EArrayAccess& access) override;
-    void visit(AST::EArrayAllocation& allocation) override;
-    void visit(AST::Instruction& instruction) override;
-    void visit(AST::IProcedureCall& call) override;
-    void visit(AST::IVariableAssignment& assignment) override;
-    void visit(AST::IArrayAssignment& assignment) override;
-    void visit(AST::ISequence& sequence) override;
-    void visit(AST::ICondition& condition) override;
-    void visit(AST::IRepetition& repetition) override;
-    void visit(AST::Procedure& definition) override;
-    void visit(AST::Program& program) override;
+    void visit(const AST::PrimitiveType& type) const override;
+    void visit(const AST::Expression& expression) const override;
+    void visit(const AST::EConstant& constant) const override;
+    void visit(const AST::ECBoolean& boolean) const override;
+    void visit(const AST::ECInteger& integer) const override;
+    void visit(const AST::EVariableAccess& variable) const override;
+    void visit(const AST::EUnaryOperation& operation) const override;
+    void visit(const AST::EBinaryOperation& operation) const override;
+    void visit(const AST::EFunctionCall& call) const override;
+    void visit(const AST::EArrayAccess& access) const override;
+    void visit(const AST::EArrayAllocation& allocation) const override;
+    void visit(const AST::Instruction& instruction) const override;
+    void visit(const AST::IProcedureCall& call) const override;
+    void visit(const AST::IVariableAssignment& assignment) const override;
+    void visit(const AST::IArrayAssignment& assignment) const override;
+    void visit(const AST::ISequence& sequence) const override;
+    void visit(const AST::ICondition& condition) const override;
+    void visit(const AST::IRepetition& repetition) const override;
+    void visit(const AST::Procedure& definition) const override;
+    void visit(const AST::Program& program) const override;
 };
 
 } // namespace pasclang::LLVMBackend

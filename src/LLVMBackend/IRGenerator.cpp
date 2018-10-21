@@ -9,7 +9,7 @@
 namespace pasclang::LLVMBackend {
 
 // converts PP type to LLVM type
-llvm::Type* IRGenerator::astToLlvmType(AST::PrimitiveType* type) {
+llvm::Type* IRGenerator::astToLlvmType(const AST::PrimitiveType* type) const {
     llvm::Type* resultType = nullptr;
     llvm::PointerType* pointerType = nullptr;
 
@@ -39,17 +39,17 @@ llvm::Type* IRGenerator::astToLlvmType(AST::PrimitiveType* type) {
 
 // emits LLVM IR for procedure declaration so functions can be called in any
 // order
-llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition) {
+llvm::Value*
+IRGenerator::emitDeclaration(const AST::Procedure* definition) const {
     // LLVM functions are declared by giving a vector of argument types, a
     // result type and the procedure name
     std::vector<llvm::Type*> argumentsTypes;
     argumentsTypes.reserve(definition->getFormals().size());
     for (auto& argument : definition->getFormals())
-        argumentsTypes.push_back(this->astToLlvmType(argument.second.get()));
+        argumentsTypes.push_back(this->astToLlvmType(argument.second));
 
     llvm::FunctionType* procedureType;
 
-    // TODO: Check whether optimizer ruins this 
     if (definition->getResultType() != nullptr)
         procedureType = llvm::FunctionType::get(
             this->astToLlvmType(definition->getResultType()), argumentsTypes,
@@ -76,7 +76,8 @@ llvm::Value* IRGenerator::emitDeclaration(AST::Procedure* definition) {
 }
 
 // emits LLVM IR for global declaration
-llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type) {
+llvm::Value* IRGenerator::emitGlobal(const std::string& name,
+                                     llvm::Type* type) const {
     // This will insert since type checking makes sure we have no duplicate
     this->module->getOrInsertGlobal(name, type);
     this->globals[name] = this->module->getNamedGlobal(name);
@@ -100,7 +101,7 @@ llvm::Value* IRGenerator::emitGlobal(std::string& name, llvm::Type* type) {
 }
 
 // emits main body
-llvm::Function* IRGenerator::emitMain(AST::Instruction& main) {
+llvm::Function* IRGenerator::emitMain(const AST::Instruction& main) const {
     std::vector<llvm::Type*> mainArgs; // empty for now, we could use command
                                        // line arguments for example
     // void return type means the program's main return value isn't a reliable
@@ -133,26 +134,25 @@ void IRGenerator::generate(AST::Program& program) { program.accept(*this); }
 // dumps LLVM IR assembly to stderr
 void IRGenerator::dumpModule() { this->module->print(llvm::errs(), nullptr); }
 
-void IRGenerator::visit(AST::PrimitiveType&) {}
-void IRGenerator::visit(AST::Expression& expression) {}
-void IRGenerator::visit(AST::EConstant& constant) {}
-
-void IRGenerator::visit(AST::ECBoolean& boolean) {
+void IRGenerator::visit(const AST::PrimitiveType&) const {}
+void IRGenerator::visit(const AST::Expression& expression) const {}
+void IRGenerator::visit(const AST::EConstant& constant) const {}
+void IRGenerator::visit(const AST::ECBoolean& boolean) const {
     this->lastValue = llvm::ConstantInt::get(
-        llvm::Type::getInt1Ty(this->context), boolean.getValue(), "bool");
+        llvm::Type::getInt1Ty(const_cast<llvm::LLVMContext&>(this->context)),
+        boolean.getValue(), "bool");
 }
 
-void IRGenerator::visit(AST::ECInteger& integer) {
+void IRGenerator::visit(const AST::ECInteger& integer) const {
     this->lastValue = llvm::ConstantInt::get(
         llvm::Type::getInt32Ty(this->context), integer.getValue(), "int");
 }
 
 // access from table of symbols
-void IRGenerator::visit(AST::EVariableAccess& variable) {
+void IRGenerator::visit(const AST::EVariableAccess& variable) const {
     // Since everything is in memory by default and an optimization pass later
     // transforms instructions to SSA registers when possible, we always use the
     // load instruction
-    llvm::Value* value;
     if (this->locals.find(variable.getName()) != this->locals.end())
         this->lastValue =
             this->builder.CreateLoad(this->locals[variable.getName()], "load");
@@ -161,7 +161,7 @@ void IRGenerator::visit(AST::EVariableAccess& variable) {
             this->module->getNamedGlobal(variable.getName()), "load");
 }
 
-void IRGenerator::visit(AST::EUnaryOperation& operation) {
+void IRGenerator::visit(const AST::EUnaryOperation& operation) const {
     operation.getExpression().accept(*this);
 
     switch (operation.getType()) {
@@ -176,7 +176,7 @@ void IRGenerator::visit(AST::EUnaryOperation& operation) {
     }
 }
 
-void IRGenerator::visit(AST::EBinaryOperation& operation) {
+void IRGenerator::visit(const AST::EBinaryOperation& operation) const {
     llvm::Value *lhs, *rhs;
 
     if (operation.getType() != AST::EBinaryOperation::Type::BinaryLogicalOr &&
@@ -317,7 +317,7 @@ void IRGenerator::visit(AST::EBinaryOperation& operation) {
     }
 }
 
-void IRGenerator::visit(AST::EFunctionCall& call) {
+void IRGenerator::visit(const AST::EFunctionCall& call) const {
     llvm::Function* callee = this->module->getFunction(call.getName());
 
     // Calls function by evaluating arguments (the so-called actuals) from left
@@ -331,7 +331,7 @@ void IRGenerator::visit(AST::EFunctionCall& call) {
     this->lastValue = this->builder.CreateCall(callee, arguments, "call");
 }
 
-void IRGenerator::visit(AST::EArrayAccess& access) {
+void IRGenerator::visit(const AST::EArrayAccess& access) const {
     access.getArray().accept(*this);
     // We first need to know the array's address
     llvm::Value* array = this->lastValue;
@@ -349,7 +349,7 @@ void IRGenerator::visit(AST::EArrayAccess& access) {
 }
 
 // calls the runtime's allocation function
-void IRGenerator::visit(AST::EArrayAllocation& allocation) {
+void IRGenerator::visit(const AST::EArrayAllocation& allocation) const {
     // Allocation types are the following: (manually done since it's extern
     // "C"'d)
     //  1 is for booleans
@@ -373,9 +373,9 @@ void IRGenerator::visit(AST::EArrayAllocation& allocation) {
         this->module->getFunction("__pasclang_gc_alloc"), arguments, "alloc");
 }
 
-void IRGenerator::visit(AST::Instruction& instruction) {}
+void IRGenerator::visit(const AST::Instruction& instruction) const {}
 
-void IRGenerator::visit(AST::IProcedureCall& call) {
+void IRGenerator::visit(const AST::IProcedureCall& call) const {
     llvm::Function* callee = this->module->getFunction(call.getName());
     std::vector<llvm::Value*> arguments;
     // Like in functions, we evaluate arguments from left to right
@@ -389,7 +389,7 @@ void IRGenerator::visit(AST::IProcedureCall& call) {
 }
 
 // stores and makes sure value is properly cast for IR correctness
-void IRGenerator::visit(AST::IVariableAssignment& assignment) {
+void IRGenerator::visit(const AST::IVariableAssignment& assignment) const {
     llvm::Value* lhs;
 
     assignment.getValue().accept(*this);
@@ -409,15 +409,15 @@ void IRGenerator::visit(AST::IVariableAssignment& assignment) {
     this->lastValue = this->builder.CreateStore(rhs, lhs);
 }
 
-void IRGenerator::visit(AST::IArrayAssignment& assignment) {
+void IRGenerator::visit(const AST::IArrayAssignment& assignment) const {
     // This is similar to array access to know the address
     assignment.getValue().accept(*this);
     llvm::Value* value = this->lastValue;
 
     std::vector<llvm::Value*> gepIndex(1);
 
-    AST::EArrayAccess& arrayAccess =
-        static_cast<AST::EArrayAccess&>(assignment.getArray());
+    auto& arrayAccess =
+        static_cast<const AST::EArrayAccess&>(assignment.getArray());
 
     arrayAccess.getArray().accept(*this);
     llvm::Value* array = this->lastValue;
@@ -435,13 +435,13 @@ void IRGenerator::visit(AST::IArrayAssignment& assignment) {
     this->lastValue = this->builder.CreateStore(value, this->lastValue);
 }
 
-void IRGenerator::visit(AST::ISequence& sequence) {
+void IRGenerator::visit(const AST::ISequence& sequence) const {
     // Each instruction is executed from first to last
     for (auto& instruction : sequence.getInstructions())
         instruction->accept(*this);
 }
 
-void IRGenerator::visit(AST::ICondition& condition) {
+void IRGenerator::visit(const AST::ICondition& condition) const {
     // First we need to evaluate the condition to know which branch is taken
     condition.getCondition().accept(*this);
     llvm::Value* conditionValue = this->lastValue;
@@ -466,7 +466,6 @@ void IRGenerator::visit(AST::ICondition& condition) {
 
     condition.getTrue().accept(*this);
     this->builder.CreateBr(branchMerge);
-    branchTrue = this->builder.GetInsertBlock();
 
     // Don't forget the false basic block hasn't yet been attached to a
     // function, we do this now
@@ -476,7 +475,6 @@ void IRGenerator::visit(AST::ICondition& condition) {
     // note: if you don't check condition this will build but emit invalid IR
     // and segfault, worst case here is it gives a dead code branch which easily
     // gets eaten by optimizers
-    // TODO: Check whether optimizer ruins this
     if (condition.getFalse() != nullptr)
         condition.getFalse()->accept(*this);
 
@@ -488,7 +486,7 @@ void IRGenerator::visit(AST::ICondition& condition) {
     this->builder.SetInsertPoint(branchMerge);
 }
 
-void IRGenerator::visit(AST::IRepetition& repetition) {
+void IRGenerator::visit(const AST::IRepetition& repetition) const {
     // First we evaluate the condition
     repetition.getCondition().accept(*this);
     llvm::Value* conditionValue = this->lastValue;
@@ -520,7 +518,7 @@ void IRGenerator::visit(AST::IRepetition& repetition) {
     this->builder.SetInsertPoint(end);
 }
 
-void IRGenerator::visit(AST::Procedure& definition) {
+void IRGenerator::visit(const AST::Procedure& definition) const {
     // The procedures are already declared, this is necessary so we can call
     // procedures declared later a consequence is we don't need to specify the
     // prototype again
@@ -542,7 +540,6 @@ void IRGenerator::visit(AST::Procedure& definition) {
     }
 
     // The function's return value is the variable bound to its name
-    // TODO: Check whether optimizer ruins this
     if (definition.getResultType() != nullptr) {
         this->locals[definition.getName()] = this->builder.CreateAlloca(
             this->astToLlvmType(definition.getResultType()), nullptr,
@@ -552,19 +549,19 @@ void IRGenerator::visit(AST::Procedure& definition) {
     // Local variables are stored on the stack too
     for (auto& local : definition.getLocals()) {
         this->locals[local.first] = this->builder.CreateAlloca(
-            this->astToLlvmType(local.second.get()), nullptr, local.first);
+            this->astToLlvmType(local.second), nullptr, local.first);
 
         // Pseudo-Pascal semantics give default value to local variables, we
         // proceed like we did for globals
         llvm::Value* defaultValue;
-        if (local.second.get()->getType()->dimension > 0)
+        if (local.second->getType()->dimension > 0)
             defaultValue =
                 llvm::ConstantPointerNull::get(static_cast<llvm::PointerType*>(
-                    this->astToLlvmType(local.second.get())));
-        else if (local.second.get()->getType()->kind ==
+                    this->astToLlvmType(local.second)));
+        else if (local.second->getType()->kind ==
                  AST::TableOfTypes::TypeKind::Integer)
             defaultValue = llvm::ConstantInt::getNullValue(
-                this->astToLlvmType(local.second.get()));
+                this->astToLlvmType(local.second));
         else
             defaultValue = llvm::ConstantInt::getFalse(this->context);
         this->builder.CreateStore(defaultValue, this->locals[local.first]);
@@ -581,7 +578,7 @@ void IRGenerator::visit(AST::Procedure& definition) {
     }
 }
 
-void IRGenerator::visit(AST::Program& program) {
+void IRGenerator::visit(const AST::Program& program) const {
     // Add built-in functions
     // write and writeln
     std::vector<llvm::Type*> writelnArgument(1);
@@ -607,11 +604,10 @@ void IRGenerator::visit(AST::Program& program) {
                            "readln", this->module.get());
 
     for (auto& global : program.getGlobals())
-        this->emitGlobal(global.first,
-                         this->astToLlvmType(global.second.get()));
+        this->emitGlobal(global.first, this->astToLlvmType(global.second));
 
-    for (auto& procedure : program.getProcedures()) {
-        this->emitDeclaration(procedure.get());
+    for (auto* procedure : program.getProcedures()) {
+        this->emitDeclaration(procedure);
     }
 
     for (auto& procedure : program.getProcedures())

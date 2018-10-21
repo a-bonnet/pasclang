@@ -45,11 +45,9 @@ IROptimizer::IROptimizer(unsigned char optimizationLevel, llvm::Module* module,
                           nullptr);
     }
 
-    for (auto functionIterator = module->getFunctionList().begin();
-         functionIterator != module->getFunctionList().end();
-         functionIterator++) {
-        if (!functionIterator->empty())
-            functionPassManager.run(*functionIterator, FAM);
+    for (auto& functionIterator : module->getFunctionList()) {
+        if (!functionIterator.empty())
+            functionPassManager.run(functionIterator, FAM);
     }
 }
 

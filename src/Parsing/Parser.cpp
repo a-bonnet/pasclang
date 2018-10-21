@@ -194,7 +194,7 @@ std::unique_ptr<AST::PrimitiveType> Parser::primitiveType() {
     // In case we declare an array
     std::unique_ptr<AST::PrimitiveType> result(nullptr);
     std::unique_ptr<Location> location(nullptr);
-    AST::TableOfTypes::Type* type;
+    const AST::TableOfTypes::Type* type;
 
     this->expect({TokenType::INTTYPE, TokenType::BOOLTYPE, TokenType::ARRAY});
 

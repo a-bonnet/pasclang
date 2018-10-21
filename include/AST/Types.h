@@ -18,27 +18,27 @@ class TableOfTypes {
 
     struct Type {
       private:
-        TableOfTypes* parentTable;
+        const TableOfTypes* parentTable;
 
       public:
         TypeKind kind = TypeKind::Boolean;
-        std::uint32_t dimension = 0;
+        mutable std::uint32_t dimension = 0;
 
-        Type(TableOfTypes* parentTable, TypeKind t, std::uint32_t d)
+        Type(const TableOfTypes* parentTable, TypeKind t, std::uint32_t d)
             : parentTable(parentTable), kind(t), dimension(d) {}
-        Type* increaseDimension() {
+        const Type* increaseDimension() const {
             return parentTable->get(kind, dimension + 1);
         }
     };
 
   private:
-    std::map<TypeKind, std::map<std::uint32_t, std::unique_ptr<Type>>>
+    mutable std::map<TypeKind, std::map<std::uint32_t, std::unique_ptr<Type>>>
         tableOfTypes;
 
   public:
     TableOfTypes() {}
     ~TableOfTypes() {}
-    Type* get(TypeKind kind, std::uint32_t dimension);
+    const Type* get(TypeKind kind, std::uint32_t dimension) const;
 };
 
 } // namespace pasclang::AST

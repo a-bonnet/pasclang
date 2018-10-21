@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "AST/Types.h"
 #include "Parsing/Location.h"
@@ -26,7 +27,7 @@ class Node {
     Node(std::unique_ptr<Parsing::Location>& location)
         : location(std::move(location)) {}
     virtual ~Node() {}
-    virtual void accept(Visitor& visitor) = 0;
+    virtual void accept(const Visitor& visitor) const = 0;
     const Parsing::Location* getLocation() const {
         return this->location.get();
     }
@@ -58,26 +59,26 @@ class Visitor {
     Visitor() {}
     virtual ~Visitor() {}
 
-    virtual void visit(PrimitiveType& type) = 0;
-    virtual void visit(Expression& expression) = 0;
-    virtual void visit(EConstant& constant) = 0;
-    virtual void visit(ECBoolean& boolean) = 0;
-    virtual void visit(ECInteger& integer) = 0;
-    virtual void visit(EVariableAccess& variable) = 0;
-    virtual void visit(EUnaryOperation& operation) = 0;
-    virtual void visit(EBinaryOperation& operation) = 0;
-    virtual void visit(EFunctionCall& call) = 0;
-    virtual void visit(EArrayAccess& access) = 0;
-    virtual void visit(EArrayAllocation& allocation) = 0;
-    virtual void visit(Instruction& instruction) = 0;
-    virtual void visit(IProcedureCall& call) = 0;
-    virtual void visit(IVariableAssignment& assignment) = 0;
-    virtual void visit(IArrayAssignment& assignment) = 0;
-    virtual void visit(ISequence& sequence) = 0;
-    virtual void visit(ICondition& condition) = 0;
-    virtual void visit(IRepetition& repetition) = 0;
-    virtual void visit(Procedure& definition) = 0;
-    virtual void visit(Program& program) = 0;
+    virtual void visit(const PrimitiveType& type) const = 0;
+    virtual void visit(const Expression& expression) const = 0;
+    virtual void visit(const EConstant& constant) const = 0;
+    virtual void visit(const ECBoolean& boolean) const = 0;
+    virtual void visit(const ECInteger& integer) const = 0;
+    virtual void visit(const EVariableAccess& variable) const = 0;
+    virtual void visit(const EUnaryOperation& operation) const = 0;
+    virtual void visit(const EBinaryOperation& operation) const = 0;
+    virtual void visit(const EFunctionCall& call) const = 0;
+    virtual void visit(const EArrayAccess& access) const = 0;
+    virtual void visit(const EArrayAllocation& allocation) const = 0;
+    virtual void visit(const Instruction& instruction) const = 0;
+    virtual void visit(const IProcedureCall& call) const = 0;
+    virtual void visit(const IVariableAssignment& assignment) const = 0;
+    virtual void visit(const IArrayAssignment& assignment) const = 0;
+    virtual void visit(const ISequence& sequence) const = 0;
+    virtual void visit(const ICondition& condition) const = 0;
+    virtual void visit(const IRepetition& repetition) const = 0;
+    virtual void visit(const Procedure& definition) const = 0;
+    virtual void visit(const Program& program) const = 0;
 };
 
 typedef std::unique_ptr<Parsing::Location> LocationPtr;
@@ -85,16 +86,18 @@ typedef std::unique_ptr<Parsing::Location> LocationPtr;
 // Points to a (shared) structure holding type information
 class PrimitiveType : public Node {
   private:
-    TableOfTypes::Type* type;
+    const TableOfTypes::Type* type;
 
   public:
-    PrimitiveType(TableOfTypes::Type* type, LocationPtr& location)
+    PrimitiveType(const TableOfTypes::Type* type, LocationPtr& location)
         : Node(location), type(type) {}
     virtual ~PrimitiveType() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
     void increaseDimension() { this->type = this->type->increaseDimension(); }
-    TableOfTypes::Type* getType() const { return this->type; }
+    const TableOfTypes::Type* getType() const { return this->type; }
 };
 
 // Instruction class name begins with 'I'. An instruction has no value.
@@ -102,7 +105,9 @@ class Instruction : public Node {
   public:
     Instruction(LocationPtr& location) : Node(location) {}
     virtual ~Instruction() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 };
 
 // Expression class name begins with 'E'. An expression has a value.
@@ -110,7 +115,9 @@ class Expression : public Node {
   public:
     Expression(LocationPtr& location) : Node(location) {}
     virtual ~Expression() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 };
 
 // A constant literal. Value is the one held by the subclass.
@@ -118,7 +125,9 @@ class EConstant : public Expression {
   public:
     EConstant(LocationPtr& location) : Expression(location) {}
     virtual ~EConstant() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 };
 
 // A boolean being true or false. Value is the boolean.
@@ -130,7 +139,9 @@ class ECBoolean final : public EConstant {
     ECBoolean(bool value, LocationPtr& location)
         : EConstant(location), value(value) {}
     virtual ~ECBoolean() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
     bool getValue() const { return this->value; }
 };
@@ -144,7 +155,9 @@ class ECInteger final : public EConstant {
     ECInteger(std::int32_t value, LocationPtr& location)
         : EConstant(location), value(value) {}
     virtual ~ECInteger() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
     std::int32_t getValue() const { return this->value; }
 };
@@ -158,7 +171,9 @@ class EVariableAccess final : public Expression {
     EVariableAccess(std::string& name, LocationPtr& location)
         : Expression(location), name(name) {}
     virtual ~EVariableAccess() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
     const std::string& getName() const { return this->name; }
 };
@@ -166,7 +181,7 @@ class EVariableAccess final : public Expression {
 // Evaluates the expression, value is the operation's result.
 class EUnaryOperation final : public Expression {
   public:
-    enum Type { UnaryMinus, UnaryNot };
+    enum class Type { UnaryMinus, UnaryNot };
 
   private:
     Type type;
@@ -177,17 +192,19 @@ class EUnaryOperation final : public Expression {
                     LocationPtr& location)
         : Expression(location), type(type), expression(std::move(expression)) {}
     virtual ~EUnaryOperation() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
     Type getType() const { return this->type; }
-    Expression& getExpression() { return *this->expression.get(); }
+    const Expression& getExpression() const { return *this->expression.get(); }
 };
 
 // Evaluates left then right-hand side, value is the computed operation's
 // result.
 class EBinaryOperation final : public Expression {
   public:
-    enum Type {
+    enum class Type {
         BinaryAddition,
         BinarySubtraction,
         BinaryMultiplication,
@@ -213,11 +230,13 @@ class EBinaryOperation final : public Expression {
         : Expression(location), type(type), left(std::move(lhs)),
           right(std::move(rhs)) {}
     virtual ~EBinaryOperation() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
     Type getType() const { return this->type; }
-    Expression& getLeft() { return *this->left.get(); }
-    Expression& getRight() { return *this->right.get(); }
+    const Expression& getLeft() const { return *this->left.get(); }
+    const Expression& getRight() const { return *this->right.get(); }
 };
 
 // Evaluates all arguments from left to right, value is the function's returned
@@ -233,11 +252,18 @@ class EFunctionCall final : public Expression {
                   LocationPtr& location)
         : Expression(location), name(name), actuals(std::move(actuals)) {}
     virtual ~EFunctionCall() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    std::string& getName() { return this->name; }
-    std::list<std::unique_ptr<Expression>>& getActuals() {
-        return this->actuals;
+    const std::string& getName() const { return this->name; }
+    const std::vector<const Expression*> getActuals() const {
+        std::vector<const Expression*> result;
+
+        for (const auto& actual : actuals)
+            result.push_back(actual.get());
+
+        return result;
     }
 };
 
@@ -254,10 +280,12 @@ class EArrayAccess final : public Expression {
         : Expression(location), array(std::move(array)),
           index(std::move(index)) {}
     virtual ~EArrayAccess() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    Expression& getArray() { return *this->array.get(); }
-    Expression& getIndex() { return *this->index.get(); }
+    const Expression& getArray() const { return *this->array.get(); }
+    const Expression& getIndex() const { return *this->index.get(); }
 };
 
 // Allocates a new (eventually multi-dimensional) array. Value is the allocated
@@ -274,10 +302,12 @@ class EArrayAllocation final : public Expression {
         : Expression(location), type(std::move(type)),
           elements(std::move(elements)) {}
     virtual ~EArrayAllocation() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    PrimitiveType& getType() { return *this->type.get(); }
-    Expression& getElements() { return *this->elements.get(); }
+    const PrimitiveType& getType() const { return *this->type.get(); }
+    const Expression& getElements() const { return *this->elements.get(); }
 };
 
 // Evaluates from left to right.
@@ -292,11 +322,18 @@ class IProcedureCall final : public Instruction {
                    LocationPtr& location)
         : Instruction(location), name(name), actuals(std::move(actuals)) {}
     virtual ~IProcedureCall() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    std::string& getName() { return this->name; }
-    std::list<std::unique_ptr<Expression>>& getActuals() {
-        return this->actuals;
+    const std::string& getName() const { return this->name; }
+    const std::vector<const Expression*> getActuals() const {
+        std::vector<const Expression*> result;
+
+        for (const auto& actual : actuals)
+            result.push_back(actual.get());
+
+        return result;
     }
 };
 
@@ -312,10 +349,12 @@ class IVariableAssignment final : public Instruction {
                         LocationPtr& location)
         : Instruction(location), name(name), value(std::move(expression)) {}
     virtual ~IVariableAssignment() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    std::string& getName() { return this->name; }
-    Expression& getValue() { return *this->value.get(); }
+    const std::string& getName() const { return this->name; }
+    const Expression& getValue() const { return *this->value.get(); }
 };
 
 // Computes the array address, the index and uses the resulting address to store
@@ -331,10 +370,12 @@ class IArrayAssignment final : public Instruction {
         : Instruction(location), array(std::move(array)),
           value(std::move(value)) {}
     virtual ~IArrayAssignment() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    Expression& getArray() { return *this->array.get(); }
-    Expression& getValue() { return *this->value.get(); }
+    const Expression& getArray() const { return *this->array.get(); }
+    const Expression& getValue() const { return *this->value.get(); }
 };
 
 // Executes each instruction in order.
@@ -347,10 +388,17 @@ class ISequence final : public Instruction {
               LocationPtr& location)
         : Instruction(location), instructions(std::move(instructions)) {}
     virtual ~ISequence() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    std::list<std::unique_ptr<Instruction>>& getInstructions() {
-        return this->instructions;
+    const std::vector<const Instruction*> getInstructions() const {
+        std::vector<const Instruction*> result;
+
+        for (const auto& instruction : instructions)
+            result.push_back(instruction.get());
+
+        return result;
     }
 };
 
@@ -371,11 +419,13 @@ class ICondition final : public Instruction {
           conditionTrue(std::move(conditionTrue)),
           conditionFalse(std::move(conditionFalse)) {}
     virtual ~ICondition() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    Expression& getCondition() { return *this->condition.get(); }
-    Instruction& getTrue() { return *this->conditionTrue.get(); }
-    Instruction* getFalse() { return this->conditionFalse.get(); }
+    const Expression& getCondition() const { return *this->condition.get(); }
+    const Instruction& getTrue() const { return *this->conditionTrue.get(); }
+    const Instruction* getFalse() const { return this->conditionFalse.get(); }
 };
 
 // Computes the boolean condition's value, repeats evaluating the instruction as
@@ -392,10 +442,14 @@ class IRepetition final : public Instruction {
         : Instruction(location), condition(std::move(condition)),
           instruction(std::move(instruction)) {}
     virtual ~IRepetition() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    Expression& getCondition() { return *this->condition.get(); }
-    Instruction& getInstructions() { return *this->instruction.get(); }
+    const Expression& getCondition() const { return *this->condition.get(); }
+    const Instruction& getInstructions() const {
+        return *this->instruction.get();
+    }
 };
 
 // A function or a procedure.
@@ -419,19 +473,38 @@ class Procedure final : public Node {
           resultType(std::move(resultType)), locals(std::move(locals)),
           body(std::move(body)) {}
     virtual ~Procedure() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    std::string& getName() { return this->name; }
-    std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
-    getFormals() {
-        return this->formals;
+    const std::string& getName() const { return this->name; }
+
+    std::vector<std::pair<std::string, const PrimitiveType*>>
+    getFormals() const {
+        std::vector<std::pair<std::string, const PrimitiveType*>> result;
+
+        for (const auto& [name, type] : this->formals) {
+            result.push_back(std::pair(name, type.get()));
+        }
+
+        return result;
     }
-    PrimitiveType* getResultType() { return this->resultType.get(); }
-    std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
-    getLocals() {
-        return this->locals;
+
+    const PrimitiveType* getResultType() const {
+        return this->resultType.get();
     }
-    Instruction& getBody() { return *this->body.get(); }
+
+    const std::vector<std::pair<std::string, const PrimitiveType*>>
+    getLocals() const {
+        std::vector<std::pair<std::string, const PrimitiveType*>> result;
+
+        for (const auto& [name, type] : this->locals)
+            result.push_back(std::make_pair(name, type.get()));
+
+        return result;
+    }
+
+    const Instruction& getBody() const { return *this->body.get(); }
 };
 
 // A program
@@ -452,17 +525,31 @@ class Program final : public Node {
           procedures(std::move(procedures)), main(std::move(main)),
           tot(std::move(table)) {}
     virtual ~Program() {}
-    virtual void accept(Visitor& visitor) override { visitor.visit(*this); }
+    virtual void accept(const Visitor& visitor) const override {
+        visitor.visit(*this);
+    }
 
-    std::list<std::pair<std::string, std::unique_ptr<PrimitiveType>>>&
-    getGlobals() {
-        return this->globals;
+    const std::vector<std::pair<std::string, const PrimitiveType*>>
+    getGlobals() const {
+        std::vector<std::pair<std::string, const PrimitiveType*>> result;
+
+        for (auto& [name, type] : this->globals) {
+            result.push_back(std::make_pair(name, type.get()));
+        }
+
+        return result;
     }
-    std::list<std::unique_ptr<Procedure>>& getProcedures() {
-        return this->procedures;
+
+    const std::vector<const Procedure*> getProcedures() const {
+        std::vector<const Procedure*> result;
+
+        for (auto& procedure : this->procedures)
+            result.push_back(procedure.get());
+
+        return result;
     }
-    Instruction& getMain() { return *this->main.get(); }
-    TableOfTypes* getTypes() { return this->tot.get(); }
+    const Instruction& getMain() const { return *this->main.get(); }
+    const TableOfTypes& getTypes() const { return *this->tot.get(); }
 };
 
 } // namespace pasclang::AST

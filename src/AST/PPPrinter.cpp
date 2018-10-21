@@ -3,19 +3,19 @@
 
 namespace pasclang::AST {
 
-void PPPrinter::print(std::unique_ptr<AST::Program>& program) {
+void PPPrinter::print(std::unique_ptr<AST::Program>& program) const {
     this->buffer.str(std::string());
     this->buffer.clear();
     program->accept(*this);
     std::cout << this->buffer.str() << std::endl;
 }
 
-void PPPrinter::indent() {
+void PPPrinter::indent() const {
     for (size_t i = 0; i < this->indentation; i++)
         this->buffer << "    ";
 }
 
-void PPPrinter::visit(PrimitiveType& type) {
+void PPPrinter::visit(const PrimitiveType& type) const {
     for (unsigned i = 0; i < type.getType()->dimension; i++)
         this->buffer << "array of ";
 
@@ -29,25 +29,25 @@ void PPPrinter::visit(PrimitiveType& type) {
     }
 }
 
-void PPPrinter::visit(Instruction&) {}
+void PPPrinter::visit(const Instruction&) const {}
 
-void PPPrinter::visit(Expression&) {}
+void PPPrinter::visit(const Expression&) const {}
 
-void PPPrinter::visit(EConstant&) {}
+void PPPrinter::visit(const EConstant&) const {}
 
-void PPPrinter::visit(ECBoolean& boolean) {
+void PPPrinter::visit(const ECBoolean& boolean) const {
     this->buffer << (boolean.getValue() ? "true" : "false");
 }
 
-void PPPrinter::visit(ECInteger& integer) {
+void PPPrinter::visit(const ECInteger& integer) const {
     this->buffer << integer.getValue();
 }
 
-void PPPrinter::visit(EVariableAccess& variable) {
+void PPPrinter::visit(const EVariableAccess& variable) const {
     this->buffer << variable.getName();
 }
 
-void PPPrinter::visit(EUnaryOperation& operation) {
+void PPPrinter::visit(const EUnaryOperation& operation) const {
     this->buffer << "(";
     switch (operation.getType()) {
     case EUnaryOperation::Type::UnaryMinus:
@@ -61,7 +61,7 @@ void PPPrinter::visit(EUnaryOperation& operation) {
     this->buffer << ")";
 }
 
-void PPPrinter::visit(EBinaryOperation& operation) {
+void PPPrinter::visit(const EBinaryOperation& operation) const {
     this->buffer << "(";
     operation.getLeft().accept(*this);
 
@@ -108,10 +108,10 @@ void PPPrinter::visit(EBinaryOperation& operation) {
     this->buffer << ")";
 }
 
-void PPPrinter::visit(EFunctionCall& call) {
+void PPPrinter::visit(const EFunctionCall& call) const {
     this->buffer << call.getName() << "(";
 
-    for (auto& actual : call.getActuals()) {
+    for (const auto actual : call.getActuals()) {
         actual->accept(*this);
         if (actual != call.getActuals().back())
             this->buffer << ", ";
@@ -119,14 +119,14 @@ void PPPrinter::visit(EFunctionCall& call) {
     this->buffer << ")";
 }
 
-void PPPrinter::visit(EArrayAccess& access) {
+void PPPrinter::visit(const EArrayAccess& access) const {
     access.getArray().accept(*this);
     this->buffer << "[";
     access.getIndex().accept(*this);
     this->buffer << "]";
 }
 
-void PPPrinter::visit(EArrayAllocation& allocation) {
+void PPPrinter::visit(const EArrayAllocation& allocation) const {
     this->buffer << "new ";
     allocation.getType().accept(*this);
     this->buffer << "[";
@@ -134,7 +134,7 @@ void PPPrinter::visit(EArrayAllocation& allocation) {
     this->buffer << "]";
 }
 
-void PPPrinter::visit(IProcedureCall& call) {
+void PPPrinter::visit(const IProcedureCall& call) const {
     this->indent();
     this->buffer << call.getName() << "(";
 
@@ -146,25 +146,24 @@ void PPPrinter::visit(IProcedureCall& call) {
     this->buffer << ")";
 }
 
-void PPPrinter::visit(IVariableAssignment& assignment) {
+void PPPrinter::visit(const IVariableAssignment& assignment) const {
     this->indent();
     this->buffer << assignment.getName() << " := ";
     assignment.getValue().accept(*this);
 }
 
-void PPPrinter::visit(IArrayAssignment& assignment) {
+void PPPrinter::visit(const IArrayAssignment& assignment) const {
     this->indent();
     assignment.getArray().accept(*this);
     this->buffer << " := ";
     assignment.getValue().accept(*this);
 }
 
-void PPPrinter::visit(ISequence& sequence) {
+void PPPrinter::visit(const ISequence& sequence) const {
     this->indent();
     this->buffer << "begin\n";
     this->indentation++;
-    for (std::unique_ptr<Instruction>& instruction :
-         sequence.getInstructions()) {
+    for (const auto instruction : sequence.getInstructions()) {
         instruction->accept(*this);
         if (instruction != sequence.getInstructions().back())
             this->buffer << ";\n";
@@ -175,7 +174,7 @@ void PPPrinter::visit(ISequence& sequence) {
     this->buffer << "end";
 }
 
-void PPPrinter::visit(ICondition& condition) {
+void PPPrinter::visit(const ICondition& condition) const {
     this->indent();
     this->buffer << "if ";
     condition.getCondition().accept(*this);
@@ -193,7 +192,7 @@ void PPPrinter::visit(ICondition& condition) {
     }
 }
 
-void PPPrinter::visit(IRepetition& repetition) {
+void PPPrinter::visit(const IRepetition& repetition) const {
     this->indent();
     this->buffer << "while ";
     repetition.getCondition().accept(*this);
@@ -203,7 +202,7 @@ void PPPrinter::visit(IRepetition& repetition) {
     this->indentation--;
 }
 
-void PPPrinter::visit(Procedure& procedure) {
+void PPPrinter::visit(const Procedure& procedure) const {
     bool isFunction = (procedure.getResultType() != nullptr);
     this->buffer << (isFunction ? "function " : "procedure ")
                  << procedure.getName() << "(";
@@ -245,7 +244,7 @@ void PPPrinter::visit(Procedure& procedure) {
     this->buffer << ";\n";
 }
 
-void PPPrinter::visit(Program& program) {
+void PPPrinter::visit(const Program& program) const {
     this->buffer << "program\n";
 
     if (!program.getGlobals().empty()) {
