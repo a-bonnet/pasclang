@@ -483,8 +483,8 @@ class Procedure final : public Node {
     getFormals() const {
         std::vector<std::pair<std::string, const PrimitiveType*>> result;
 
-        for (const auto& [name, type] : this->formals) {
-            result.push_back(std::pair(name, type.get()));
+        for (auto& [name, type] : this->formals) {
+            result.push_back(std::make_pair(name, type.get()));
         }
 
         return result;

@@ -207,15 +207,13 @@ void PPPrinter::visit(const Procedure& procedure) const {
     this->buffer << (isFunction ? "function " : "procedure ")
                  << procedure.getName() << "(";
 
-    if (!procedure.getFormals().empty()) {
-        unsigned nIter = 0;
-        for (auto iter = procedure.getFormals().begin();
-             iter != procedure.getFormals().end(); ++iter) {
-            this->buffer << iter->first << " : ";
-            iter->second->accept(*this);
-            if (nIter < procedure.getFormals().size() - 1)
+    auto formals = procedure.getFormals();
+    if (!formals.empty()) {
+        for (auto& f : formals) {
+            this->buffer << f.first << " : ";
+            f.second->accept(*this);
+            if (f != formals.back())
                 this->buffer << " ; ";
-            nIter++;
         }
     }
 

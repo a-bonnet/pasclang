@@ -117,7 +117,8 @@ void TypeChecker::readDeclaration(const AST::Procedure* definition) const {
         this->procedures[name][name] = definition->getResultType();
     }
 
-    for (auto& argument : definition->getFormals()) {
+    auto formals = definition->getFormals();
+    for (auto argument : formals) {
         if (this->locals.find(argument.first) == this->locals.end()) {
             this->procedures[name][argument.first] = argument.second;
         } else
@@ -368,17 +369,17 @@ void TypeChecker::visit(const AST::IProcedureCall& call) const {
     }
 
     std::string name = call.getName();
-    auto procedure = std::find_if(
-        this->ast->getProcedures().begin(), this->ast->getProcedures().end(),
-        [&name](const AST::Procedure* currentProcedure) {
-            return currentProcedure->getName() == name;
-        });
+    auto procedures = this->ast->getProcedures();
+    auto p = std::find_if(procedures.begin(), procedures.end(),
+                          [&name](const AST::Procedure* currentProcedure) {
+                              return currentProcedure->getName() == name;
+                          });
 
-    if (procedure == this->ast->getProcedures().end())
+    if (p == this->ast->getProcedures().end())
         this->undefinedSymbol(name, &call.getLocation()->getStart(),
                               &call.getLocation()->getEnd());
 
-    auto formals = (*procedure)->getFormals();
+    auto formals = (*p)->getFormals();
 
     const auto& actuals = call.getActuals();
 
@@ -396,7 +397,7 @@ void TypeChecker::visit(const AST::IProcedureCall& call) const {
                             &(*actual)->getLocation()->getEnd());
     }
 
-    if ((*procedure)->getResultType() != nullptr)
+    if ((*p)->getResultType() != nullptr)
         this->invalidCall(name, &call.getLocation()->getStart(),
                           &call.getLocation()->getEnd());
 

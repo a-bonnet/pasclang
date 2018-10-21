@@ -44,7 +44,6 @@ IRGenerator::emitDeclaration(const AST::Procedure* definition) const {
     // LLVM functions are declared by giving a vector of argument types, a
     // result type and the procedure name
     std::vector<llvm::Type*> argumentsTypes;
-    argumentsTypes.reserve(definition->getFormals().size());
     for (auto& argument : definition->getFormals())
         argumentsTypes.push_back(this->astToLlvmType(argument.second));
 
@@ -65,11 +64,11 @@ IRGenerator::emitDeclaration(const AST::Procedure* definition) const {
                                definition->getName(), this->module.get());
 
     // Set the name for easier debugging/IR readability
-    auto formalsIterator = definition->getFormals().begin();
+    auto formals = definition->getFormals();
+    auto f = formals.begin();
     for (auto argument = procedure->arg_begin();
-         argument != procedure->arg_end(); argument++) {
-        argument->setName(formalsIterator->first);
-        formalsIterator++;
+         argument != procedure->arg_end(); argument++, f++) {
+        argument->setName(f->first);
     }
 
     return procedure;
