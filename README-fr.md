@@ -149,7 +149,7 @@ L'aide à l'utilisation en ligne de commande de Pasclang est donnée lorsque le 
 
 ## Support
 
-Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 10. Les compilateurs testés sont clang 7.0.0 et gcc 8.2 avec LLVM 7.0.0 et libstdc++-8.2. Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
+Le développement et les tests ont lieu sur une distribution Linux sur architecture amd64 et tous les tests passent sur Debian 10. Les compilateurs testés sont clang 8.0.0 et gcc 8.3 avec LLVM 8.0.0 et libstdc++-8.3. Certaines distributions (par exemple Fedora) requierent le téléchargement et l'installation de bibliothèques de développement statiques, par exemple en cas d'erreur `cannot find -lc/-lstdc++/-lm` lors de l'édition des liens. Autrement, le compilateur devrait fonctionner sans modification sur les systèmes Unix mais demandera des ajustements pour les autres, notamment pour les lignes sous le `#warning` dans `src/main.cpp`.
 
 ## Arborescence des sources
 
