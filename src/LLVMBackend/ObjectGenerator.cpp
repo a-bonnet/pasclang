@@ -1,15 +1,16 @@
 #include "LLVMBackend/ObjectGenerator.h"
-#include "llvm/IR/LegacyPassManager.h"
 
+#include <llvm/CodeGen/BuiltinGCs.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetOptions.h>
-
-#include <llvm/IR/Verifier.h>
 
 namespace pasclang::LLVMBackend {
 
@@ -18,10 +19,11 @@ ObjectGenerator::ObjectGenerator(bool assembly, std::string& objectName,
                                  Message::BaseReporter* reporter)
     : objectName(objectName), module(module), reporter(reporter) {
     llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetDisassembler();
     llvm::InitializeNativeTargetAsmParser();
     llvm::InitializeNativeTargetAsmPrinter();
 
+    // Triple (e.g. x86_64-unknown-linux-gnu) information is required to set the
+    // target
     this->objectName = objectName;
     this->triple = llvm::sys::getDefaultTargetTriple();
     std::string error;
@@ -37,10 +39,9 @@ ObjectGenerator::ObjectGenerator(bool assembly, std::string& objectName,
     std::string cpuFeatures = "";
 
     llvm::TargetOptions targetOptions;
-    llvm::Optional<llvm::Reloc::Model> relocModel =
-        llvm::Optional<llvm::Reloc::Model>();
     llvm::TargetMachine* machine = this->target->createTargetMachine(
-        this->triple, targetCpu, cpuFeatures, targetOptions, relocModel);
+        this->triple, targetCpu, cpuFeatures, targetOptions,
+        llvm::Optional<llvm::Reloc::Model>());
 
     this->module->setDataLayout(machine->createDataLayout());
     this->module->setTargetTriple(this->triple);
@@ -57,9 +58,9 @@ ObjectGenerator::ObjectGenerator(bool assembly, std::string& objectName,
     }
 
     llvm::legacy::PassManager passManager;
-    llvm::TargetMachine::CodeGenFileType fileType =
-        (assembly ? llvm::TargetMachine::CGFT_AssemblyFile
-                  : llvm::TargetMachine::CGFT_ObjectFile);
+    llvm::CodeGenFileType fileType =
+        (assembly ? llvm::CodeGenFileType::CGFT_AssemblyFile
+                  : llvm::CodeGenFileType::CGFT_ObjectFile);
 
     if (machine->addPassesToEmitFile(passManager, outputFile, nullptr,
                                      fileType)) {
@@ -69,6 +70,8 @@ ObjectGenerator::ObjectGenerator(bool assembly, std::string& objectName,
                                 nullptr, nullptr);
         throw PasclangException(ExitCode::GeneratorError);
     }
+
+    //llvm::linkAllBuiltinGCs();
 
     llvm::verifyModule(*this->module);
     passManager.run(*this->module);
